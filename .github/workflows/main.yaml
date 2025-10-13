@@ -19,14 +19,8 @@ jobs:
       - name: Install dependencies without prepare script
         run: npm install --ignore-scripts
 
-      - name: Fix permissions recursively for husky
-        run: chmod -R +x ./node_modules/husky
-
-      - name: Check husky folder permissions
-        run: ls -la node_modules/husky
-
-      - name: Run husky install directly
-        run: ./node_modules/.bin/husky install
+      - name: Run husky install with npx
+        run: npx --no-install husky install
 
       - name: Run ESLint
         run: npm run lint
