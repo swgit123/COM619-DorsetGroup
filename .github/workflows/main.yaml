@@ -19,9 +19,6 @@ jobs:
       - name: Install dependencies without prepare script
         run: npm install --ignore-scripts
 
-      - name: Run husky install with npx
-        run: npx --no-install husky install
-
       - name: Run ESLint
         run: npm run lint
         continue-on-error: true
