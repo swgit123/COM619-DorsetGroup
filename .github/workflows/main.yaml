@@ -16,7 +16,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Install Dev Dependencies
-        run: npm install --only=dev
+        run: npm install
       - name: Run ESLint
         run: npm run lint
         continue-on-error: true
