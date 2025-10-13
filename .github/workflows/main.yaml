@@ -15,8 +15,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      - name: Install Dev Dependencies
-        run: npm install
+
+      - name: Install dependencies without prepare script
+        run: npm install --ignore-scripts
+
+      - name: Fix husky permissions
+        run: chmod +x ./node_modules/husky/husky.sh
+
+      - name: Run husky install manually
+        run: npx husky install
+
       - name: Run ESLint
         run: npm run lint
         continue-on-error: true
+
