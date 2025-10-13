@@ -19,6 +19,9 @@ jobs:
       - name: Install dependencies without prepare script
         run: npm install --ignore-scripts
 
+      - name: Fix permissions on node_modules binaries
+        run: chmod -R +x ./node_modules/.bin
+
       - name: Run ESLint
         run: npm run lint
         continue-on-error: true
