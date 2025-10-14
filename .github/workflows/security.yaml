@@ -15,8 +15,9 @@ jobs:
       - name: Run TruffleHog scan for secrets
         uses: trufflesecurity/trufflehog@main
         with:
+          base: ""
+          head: ${{ github.ref_name }}
           extra_args: >-
-            --branch=${{ github.head_ref || github.ref_name }}
             --results=verified,unknown,unverified
             --no-verification
             --json
