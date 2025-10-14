@@ -1,11 +1,11 @@
 name: Security Checks
 
 on:
-  - push
-  - pull_request
+  push:
+  pull_request:
 
 jobs:
-  test:
+  scan-secrets:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -13,12 +13,21 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get base commit
+      - name: Set base branch and calculate base commit
         id: base
         run: |
-          echo "BASE_COMMIT=$(git merge-base origin/${{ github.base_ref || 'main' }} HEAD)" >> "$GITHUB_OUTPUT"
+          # Use base_ref for pull_request events, or default to main
+          BASE_BRANCH="${{ github.base_ref || 'origin/main' }}"
+          echo "Using base branch: $BASE_BRANCH"
+          git fetch origin $BASE_BRANCH
+          BASE_COMMIT=$(git merge-base HEAD origin/${{ github.base_ref || 'main' }})
+          echo "BASE_COMMIT=$BASE_COMMIT" >> $GITHUB_OUTPUT
 
-      - name: Secret Scanning
+      - name: Run TruffleHog scan for secrets
         uses: trufflesecurity/trufflehog@main
         with:
-          extra_args: --since-commit=${{ steps.base.outputs.BASE_COMMIT }} --results=verified,unknown,unverified --no-verification --json
+          extra_args: >-
+            --since-commit=${{ steps.base.outputs.BASE_COMMIT }}
+            --results=verified,unknown,unverified
+            --no-verification
+            --json
