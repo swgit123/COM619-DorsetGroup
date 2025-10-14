@@ -3,6 +3,8 @@
 
 echo "Running pre-commit checks..."
 
+echo "trufflehog git file://. --since-commit HEAD --results=verified,unknown --fail" > .husky/pre-commit
+
 ## prettier
 
 npm run prettier
