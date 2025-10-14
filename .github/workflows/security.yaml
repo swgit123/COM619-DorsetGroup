@@ -18,6 +18,6 @@ jobs:
           base: ""
           head: ${{ github.ref_name }}
           extra_args: >-
-            --results=verified,unknown,unverified
+            --results=verified,unknown
             --no-verification
             --json
