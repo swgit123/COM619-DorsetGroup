@@ -28,28 +28,28 @@ spec:
         app: couchdb
     spec:
       containers:
-      - name: couchdb
-        image: couchdb:3.3
-        ports:
-        - containerPort: 5984
-        env:
-        - name: COUCHDB_USER
-          value: "admin"
-        - name: COUCHDB_PASSWORD
-          value: "password"
-        - name: COUCHDB_NODENAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        volumeMounts:
-        - name: couchdb-data
-          mountPath: /opt/couchdb/data
+        - name: couchdb
+          image: couchdb:3.3
+          ports:
+            - containerPort: 5984
+          env:
+            - name: COUCHDB_USER
+              value: "admin"
+            - name: COUCHDB_PASSWORD
+              value: "password"
+            - name: COUCHDB_NODENAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          volumeMounts:
+            - name: couchdb-data
+              mountPath: /opt/couchdb/data
   volumeClaimTemplates:
-  - metadata:
-      name: couchdb-data
-    spec:
-      accessModes: ["ReadWriteOnce"]
-      storageClassName: "gp2"
-      resources:
-        requests:
-          storage: 1Gi
+    - metadata:
+        name: couchdb-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: "gp2"
+        resources:
+          requests:
+            storage: 1Gi
