@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: com619-deployment
+  labels:
+    app: com619-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: com619-app
+  template:
+    metadata:
+      labels:
+        app: com619-app
+    spec:
+      containers:
+        - name: com619-container
+          image: 114788392298.dkr.ecr.eu-west-2.amazonaws.com/com619app:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+      imagePullSecrets:
+        - name: ecr-registry-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: com619-service
+  labels:
+    app: com619-app
+spec:
+  type: LoadBalancer
+  selector:
+    app: com619-app
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+      protocol: TCP
