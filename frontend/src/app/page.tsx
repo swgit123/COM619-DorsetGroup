@@ -384,7 +384,254 @@ function ImageDrop() {
   );
 }
 
+// --- Ingredient types & data ---
+type Unit = "g" | "kg" | "ml" | "l" | "tsp" | "tbsp" | "cup" | "piece";
+interface PickedIngredient { name: string; quantity: number; unit: Unit; }
+
+const INGREDIENTS = [
+  "Pasta","Spaghetti","Rice","Egg","Milk","Butter","Olive oil","Chicken breast",
+  "Beef mince","Pork","Salmon","Tuna","Shrimp","Onion","Garlic","Tomato",
+  "Tomato paste","Cherry tomatoes","Basil","Parsley","Coriander","Lemon",
+  "Lime","Carrot","Celery","Bell pepper","Spinach","Broccoli","Mushrooms",
+  "Potato","Sweet potato","Flour","Sugar","Brown sugar","Honey","Salt","Black pepper",
+  "Paprika","Cumin","Chili flakes","Soy sauce","Vinegar","Parmesan","Cheddar",
+  "Mozzarella","Yogurt","Cream","Coconut milk","Stock cube"
+];
+
+function classJoin(...xs: (string|false|undefined)[]) { return xs.filter(Boolean).join(" "); }
+
+function IngredientsPicker({
+  value,
+  onChange,
+}: {
+  value: PickedIngredient[];
+  onChange: (next: PickedIngredient[]) => void;
+}) {
+  const [query, setQuery] = React.useState("");
+  const [selectedName, setSelectedName] = React.useState<string>("");
+  const [qtyText, setQtyText] = React.useState<string>("");
+  const [unit, setUnit] = React.useState<Unit>("g");
+
+  const searchRef = React.useRef<HTMLInputElement | null>(null);
+  const qtyRef = React.useRef<HTMLInputElement | null>(null);
+
+  // Multi-select for existing pills
+  const [selectedPills, setSelectedPills] = React.useState<Set<string>>(new Set());
+
+  const suggestions = React.useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const pool = INGREDIENTS.filter(
+      n => !value.some(v => v.name.toLowerCase() === n.toLowerCase())
+    );
+    if (!q) return [];
+    return pool.filter(n => n.toLowerCase().includes(q)).slice(0, 10);
+  }, [query, value]);
+
+  const qty = Number(qtyText);
+  const showQtyRow = !!selectedName;
+
+  function resetAll() {
+    setQuery("");
+    setSelectedName("");
+    setQtyText("");
+    setUnit("g");
+    setTimeout(() => searchRef.current?.focus(), 0);
+  }
+
+  function chooseIngredient(name: string) {
+    setSelectedName(name);
+    setQuery("");
+    setQtyText("");
+    setUnit("g");
+    setTimeout(() => qtyRef.current?.focus(), 0);
+  }
+
+  function addIngredient() {
+    if (!selectedName) return;
+    if (!qty || qty <= 0) return;
+    onChange([...value, { name: selectedName, quantity: qty, unit }]);
+    resetAll();
+  }
+
+  function removeIngredient(name: string) {
+    onChange(value.filter(v => v.name.toLowerCase() !== name.toLowerCase()));
+    setSelectedPills(prev => {
+      const next = new Set(prev);
+      next.delete(name);
+      return next;
+    });
+  }
+
+  function togglePillSelection(name: string) {
+    setSelectedPills(prev => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  }
+
+  return (
+    <div className="grid gap-3">
+      {/* Search (hidden once a pill is chosen) */}
+      {!selectedName && (
+        <>
+          <input
+            ref={searchRef}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && query.trim().length > 0 && suggestions.length === 1) {
+                e.preventDefault();
+                chooseIngredient(suggestions[0]);
+              }
+            }}
+            placeholder="Start typing an ingredient… (e.g., pasta)"
+            className={`${brand.input} ${brand.pill} w-full px-4 py-2`}
+          />
+          {query.trim().length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {suggestions.length === 0 ? (
+                <span className="text-sm text-slate-500">No matches.</span>
+              ) : (
+                suggestions.map((name) => (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() => chooseIngredient(name)}
+                    className="px-3 py-1 rounded-full border border-slate-200 bg-white/90 hover:bg-slate-100 text-sm text-slate-800"
+                  >
+                    {name}
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Selected ingredient pill */}
+      {selectedName && (
+        <div className="flex items-center gap-3">
+          <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-sm">
+            {selectedName}
+          </span>
+          <button
+            type="button"
+            onClick={resetAll}
+            className={`${brand.btn} ${brand.subtle}`}
+          >
+            Cancel
+          </button>   
+        </div>
+      )}
+
+      {/* Quantity + Unit appear together; Enter in qty submits with current unit */}
+      {showQtyRow && (
+        <div className="grid gap-1">
+          <label className="text-sm text-slate-600">How much?</label>
+          <div className="flex flex-wrap items-center gap-3">
+            <input
+              ref={qtyRef}
+              type="text"
+              inputMode="decimal"
+              pattern="[0-9]*[.,]?[0-9]*"
+              value={qtyText}
+              onChange={(e) => {
+                const v = e.target.value.replace(",", ".");
+                if (/^\d*\.?\d*$/.test(v)) setQtyText(v);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !!Number(qtyText) && Number(qtyText) > 0) {
+                  e.preventDefault();
+                  addIngredient(); // submit with current unit
+                }
+              }}
+              placeholder="e.g., 200"
+              className={`${brand.input} ${brand.pill} px-4 py-2`}
+            />
+            <select
+              value={unit}
+              onChange={(e) => setUnit(e.target.value as Unit)}
+              className={`${brand.input} ${brand.pill} px-3 py-2`}
+              title="Unit"
+            >
+              {["g","kg","ml","l","tsp","tbsp","cup","piece"].map(u => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={addIngredient}
+              className={`${brand.btn} ${brand.primary}`}
+              disabled={!qty || qty <= 0}
+            >
+              Add ingredient
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Added ingredients as pills (wobble when selected) */}
+      <div className="flex flex-wrap gap-2 mt-1">
+        {value.length === 0 ? (
+          <div className="text-sm text-slate-500">No ingredients added yet.</div>
+        ) : (
+          value.map((ing) => {
+            const isSelected = selectedPills.has(ing.name);
+            return (
+              <div
+                key={ing.name}
+                onClick={() => togglePillSelection(ing.name)}
+                className={[
+                  "relative select-none cursor-pointer px-3 py-1 rounded-full border text-sm",
+                  "bg-white/90 border-slate-200 text-slate-800 hover:bg-slate-100",
+                  isSelected ? "ring-2 ring-blue-400 animate-wobble" : ""
+                ].join(" ")}
+                title={`${ing.name} ${ing.quantity} ${ing.unit}`}
+              >
+                <span className="pr-6">
+                  {ing.name} {ing.quantity} {ing.unit}
+                </span>
+                {isSelected && (
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); removeIngredient(ing.name); }}
+                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-red-500 text-white grid place-items-center shadow hover:bg-red-600"
+                    aria-label={`Delete ${ing.name}`}
+                    title="Delete"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* wobble animation */}
+      <style jsx global>{`
+        @keyframes wobble {
+          0%, 100% { transform: rotate(-0.6deg) translateY(0); }
+          50% { transform: rotate(0.6deg) translateY(-1px); }
+        }
+        .animate-wobble {
+          animation: wobble 250ms ease-in-out infinite;
+        }
+      `}</style>
+    </div>
+  );
+}
+
+
+
+
+
+
 function UploadPage() {
+  const [ingredients, setIngredients] = useState<PickedIngredient[]>([]);
+
   return (
     <div className="mx-auto max-w-4xl p-4 sm:p-6">
       <div className={`p-6 ${brand.card} ${brand.radius}`}>
@@ -397,20 +644,18 @@ function UploadPage() {
         <div className="grid gap-4">
           <ImageDrop />
 
+          {/* Name */}
           <div className="grid gap-2">
-            <label className="text-sm font-medium text-slate-700">
-              Recipe Name
-            </label>
+            <label className="text-sm font-medium text-slate-700">Recipe Name</label>
             <input
               className={`${brand.input} ${brand.pill} px-4 py-2`}
               placeholder="e.g., Garlic Butter Shrimp"
             />
           </div>
 
+          {/* Description */}
           <div className="grid gap-2">
-            <label className="text-sm font-medium text-slate-700">
-              Description
-            </label>
+            <label className="text-sm font-medium text-slate-700">Description</label>
             <textarea
               rows={4}
               className={`${brand.input} ${brand.radius} p-3`}
@@ -418,17 +663,13 @@ function UploadPage() {
             />
           </div>
 
+          {/* Ingredients (picker) */}
           <div className="grid gap-2">
-            <label className="text-sm font-medium text-slate-700">
-              Ingredients
-            </label>
-            <textarea
-              rows={4}
-              className={`${brand.input} ${brand.radius} p-3`}
-              placeholder="200g pasta..."
-            />
+            <label className="text-sm font-medium text-slate-700">Ingredients</label>
+            <IngredientsPicker value={ingredients} onChange={setIngredients} />
           </div>
 
+          {/* Steps */}
           <div className="grid gap-2">
             <label className="text-sm font-medium text-slate-700">Steps</label>
             <textarea
@@ -439,16 +680,25 @@ function UploadPage() {
           </div>
 
           <div className="flex items-center justify-end gap-3 mt-2">
-            <button className={`${brand.btn} ${brand.subtle}`}>
-              Save Draft
+            <button className={`${brand.btn} ${brand.subtle}`}>Save Draft</button>
+            <button
+              className={`${brand.btn} ${brand.primary}`}
+              onClick={() =>
+                console.log("Submit payload:", {
+                  // name, description, steps would be read from state when you wire the form
+                  ingredients,
+                })
+              }
+            >
+              Publish
             </button>
-            <button className={`${brand.btn} ${brand.primary}`}>Publish</button>
           </div>
         </div>
       </div>
     </div>
   );
 }
+
 
 function HomePage({
   loggedIn,
