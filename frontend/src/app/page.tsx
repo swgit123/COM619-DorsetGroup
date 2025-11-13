@@ -1,6 +1,21 @@
 "use client";
-import React, { useMemo, useState } from "react";
-import { Heart, MessageCircle, Search, Upload, LogIn, UserRound, LogOut, Bookmark, ImagePlus, Camera, Eye, EyeOff, ChefHat, Star } from "lucide-react";
+import React, {useMemo, useState} from "react";
+import {
+  Heart,
+  MessageCircle,
+  Search,
+  Upload,
+  LogIn,
+  UserRound,
+  LogOut,
+  Bookmark,
+  ImagePlus,
+  Camera,
+  Eye,
+  EyeOff,
+  ChefHat,
+  Star,
+} from "lucide-react";
 
 // --- Simple design tokens ---
 const brand = {
@@ -12,7 +27,8 @@ const brand = {
   primary: "bg-blue-600 hover:bg-blue-700 text-white",
   subtle: "bg-slate-100 hover:bg-slate-200 text-slate-800",
   ghost: "hover:bg-slate-100 text-slate-700",
-  input: "bg-white/90 border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none",
+  input:
+    "bg-white/90 border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none",
 };
 
 // --- Types ---
@@ -32,7 +48,8 @@ const mockRecipes: Recipe[] = [
     id: "1",
     name: "Creamy Tomato Penne",
     author: "Alex Rivera",
-    image: "https://images.unsplash.com/photo-1521389508051-d7ffb5dc8bbf?q=80&w=1200&auto=format&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1521389508051-d7ffb5dc8bbf?q=80&w=1200&auto=format&fit=crop",
     liked: true,
     favourite: true,
     isPublic: true,
@@ -41,7 +58,8 @@ const mockRecipes: Recipe[] = [
     id: "2",
     name: "Mediterranean Salad Bowl",
     author: "Samira Q.",
-    image: "https://images.unsplash.com/photo-1540420773420-3366772f4999?q=80&w=1200&auto=format&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1540420773420-3366772f4999?q=80&w=1200&auto=format&fit=crop",
     liked: false,
     favourite: false,
     isPublic: true,
@@ -50,13 +68,24 @@ const mockRecipes: Recipe[] = [
     id: "3",
     name: "Lemon Herb Chicken",
     author: "Daniel P.",
-    image: "https://images.unsplash.com/photo-1604908176997-4319ea4d1e2a?q=80&w=1200&auto=format&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1604908176997-4319ea4d1e2a?q=80&w=1200&auto=format&fit=crop",
     isPublic: true,
   },
 ];
 
 // --- Components ---
-function Navbar({ loggedIn, onRoute, onLogout, onLogin }: { loggedIn: boolean; onRoute: (r: Route) => void; onLogout: () => void; onLogin: () => void; }) {
+function Navbar({
+  loggedIn,
+  onRoute,
+  onLogout,
+  onLogin,
+}: {
+  loggedIn: boolean;
+  onRoute: (r: Route) => void;
+  onLogout: () => void;
+  onLogin: () => void;
+}) {
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur">
       <div className="mx-auto max-w-6xl px-4 py-3 flex items-center gap-3 justify-between">
@@ -66,11 +95,24 @@ function Navbar({ loggedIn, onRoute, onLogout, onLogin }: { loggedIn: boolean; o
             <span className="font-semibold text-slate-900">RecipeShare</span>
           </div>
           <nav className="hidden sm:flex items-center gap-2 ml-4">
-            <button onClick={() => onRoute("home")} className={`${brand.btn} ${brand.ghost}`}>Home</button>
+            <button
+              onClick={() => onRoute("home")}
+              className={`${brand.btn} ${brand.ghost}`}
+            >
+              Home
+            </button>
             {loggedIn && (
               <>
-                <button onClick={() => onRoute("favourites")} className={`${brand.btn} ${brand.ghost}`}>Favourites</button>
-                <button onClick={() => onRoute("upload")} className={`${brand.btn} ${brand.primary} flex items-center gap-2`}>
+                <button
+                  onClick={() => onRoute("favourites")}
+                  className={`${brand.btn} ${brand.ghost}`}
+                >
+                  Favourites
+                </button>
+                <button
+                  onClick={() => onRoute("upload")}
+                  className={`${brand.btn} ${brand.primary} flex items-center gap-2`}
+                >
                   <Upload className="h-4 w-4" /> Upload
                 </button>
               </>
@@ -79,11 +121,17 @@ function Navbar({ loggedIn, onRoute, onLogout, onLogin }: { loggedIn: boolean; o
         </div>
         <div className="flex items-center gap-2">
           {!loggedIn ? (
-            <button onClick={onLogin} className={`${brand.btn} ${brand.subtle} flex items-center gap-2`}>
+            <button
+              onClick={onLogin}
+              className={`${brand.btn} ${brand.subtle} flex items-center gap-2`}
+            >
               <LogIn className="h-4 w-4" /> Sign in
             </button>
           ) : (
-            <button onClick={onLogout} className={`${brand.btn} ${brand.subtle} flex items-center gap-2`}>
+            <button
+              onClick={onLogout}
+              className={`${brand.btn} ${brand.subtle} flex items-center gap-2`}
+            >
               <LogOut className="h-4 w-4" /> Sign out
             </button>
           )}
@@ -96,7 +144,13 @@ function Navbar({ loggedIn, onRoute, onLogout, onLogin }: { loggedIn: boolean; o
   );
 }
 
-function SearchBar({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function SearchBar({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
   return (
     <div className="relative">
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
@@ -110,21 +164,50 @@ function SearchBar({ value, onChange }: { value: string; onChange: (v: string) =
   );
 }
 
-function RecipeCard({ recipe, onLike, onFav, onOpen }: { recipe: Recipe; onLike: (id: string) => void; onFav: (id: string) => void; onOpen: (id: string) => void; }) {
+function RecipeCard({
+  recipe,
+  onLike,
+  onFav,
+  onOpen,
+}: {
+  recipe: Recipe;
+  onLike: (id: string) => void;
+  onFav: (id: string) => void;
+  onOpen: (id: string) => void;
+}) {
   return (
     <article className={`flex gap-4 p-3 ${brand.card} ${brand.radius}`}>
-      <img src={recipe.image} alt={recipe.name} className="h-24 w-24 rounded-xl object-cover" />
+      <img
+        src={recipe.image}
+        alt={recipe.name}
+        className="h-24 w-24 rounded-xl object-cover"
+      />
       <div className="flex-1 min-w-0">
         <h3 className="font-semibold text-slate-900 truncate">{recipe.name}</h3>
         <p className="text-sm text-slate-600">by {recipe.author}</p>
         <div className="mt-3 flex items-center gap-3">
-          <button onClick={() => onLike(recipe.id)} className={`${brand.btn} ${brand.ghost} flex items-center gap-1`}>
-            <Heart className={`h-4 w-4 ${recipe.liked ? "fill-red-500 stroke-red-500" : ""}`} /> Like
+          <button
+            onClick={() => onLike(recipe.id)}
+            className={`${brand.btn} ${brand.ghost} flex items-center gap-1`}
+          >
+            <Heart
+              className={`h-4 w-4 ${recipe.liked ? "fill-red-500 stroke-red-500" : ""}`}
+            />{" "}
+            Like
           </button>
-          <button onClick={() => onFav(recipe.id)} className={`${brand.btn} ${brand.ghost} flex items-center gap-1`}>
-            <Bookmark className={`h-4 w-4 ${recipe.favourite ? "fill-slate-800 stroke-slate-800" : ""}`} /> Save
+          <button
+            onClick={() => onFav(recipe.id)}
+            className={`${brand.btn} ${brand.ghost} flex items-center gap-1`}
+          >
+            <Bookmark
+              className={`h-4 w-4 ${recipe.favourite ? "fill-slate-800 stroke-slate-800" : ""}`}
+            />{" "}
+            Save
           </button>
-          <button onClick={() => onOpen(recipe.id)} className={`${brand.btn} ${brand.ghost} flex items-center gap-1`}>
+          <button
+            onClick={() => onOpen(recipe.id)}
+            className={`${brand.btn} ${brand.ghost} flex items-center gap-1`}
+          >
             <MessageCircle className="h-4 w-4" /> Details
           </button>
         </div>
@@ -133,33 +216,82 @@ function RecipeCard({ recipe, onLike, onFav, onOpen }: { recipe: Recipe; onLike:
   );
 }
 
-function AuthCard({ mode = "login", onSwitch, onSuccess }: { mode?: "login" | "signup"; onSwitch: () => void; onSuccess: () => void; }) {
+function AuthCard({
+  mode = "login",
+  onSwitch,
+  onSuccess,
+}: {
+  mode?: "login" | "signup";
+  onSwitch: () => void;
+  onSuccess: () => void;
+}) {
   const [showPw, setShowPw] = useState(false);
   return (
-    <div className={`max-w-md w-full p-6 ${brand.card} ${brand.radius} shadow-xl`}>      
+    <div
+      className={`max-w-md w-full p-6 ${brand.card} ${brand.radius} shadow-xl`}
+    >
       <div className="flex items-center gap-2 mb-4">
         <Star className="h-5 w-5 text-yellow-500" />
-        <h2 className="text-xl font-semibold text-slate-900">{mode === "login" ? "Login / Sign Up" : "Create an account"}</h2>
+        <h2 className="text-xl font-semibold text-slate-900">
+          {mode === "login" ? "Login / Sign Up" : "Create an account"}
+        </h2>
       </div>
 
-      <label className="block text-sm font-medium text-slate-700">Email Address</label>
-      <input type="email" className={`mt-1 mb-3 w-full ${brand.input} ${brand.pill} px-4 py-2`} placeholder="you@example.com"/>
+      <label className="block text-sm font-medium text-slate-700">
+        Email Address
+      </label>
+      <input
+        type="email"
+        className={`mt-1 mb-3 w-full ${brand.input} ${brand.pill} px-4 py-2`}
+        placeholder="you@example.com"
+      />
 
-      <label className="block text-sm font-medium text-slate-700">Password</label>
+      <label className="block text-sm font-medium text-slate-700">
+        Password
+      </label>
       <div className="relative mt-1 mb-4">
-        <input type={showPw ? "text" : "password"} className={`w-full ${brand.input} ${brand.pill} px-4 py-2`} placeholder="••••••••"/>
-        <button type="button" onClick={() => setShowPw((s) => !s)} className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-slate-500 hover:text-slate-700">
-          {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        <input
+          type={showPw ? "text" : "password"}
+          className={`w-full ${brand.input} ${brand.pill} px-4 py-2`}
+          placeholder="••••••••"
+        />
+        <button
+          type="button"
+          onClick={() => setShowPw((s) => !s)}
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-slate-500 hover:text-slate-700"
+        >
+          {showPw ? (
+            <EyeOff className="h-4 w-4" />
+          ) : (
+            <Eye className="h-4 w-4" />
+          )}
         </button>
       </div>
 
-      <button onClick={onSuccess} className={`w-full ${brand.btn} ${brand.primary}`}>{mode === "login" ? "Login" : "Create account"}</button>
+      <button
+        onClick={onSuccess}
+        className={`w-full ${brand.btn} ${brand.primary}`}
+      >
+        {mode === "login" ? "Login" : "Create account"}
+      </button>
 
       <p className="text-center text-sm text-slate-600 mt-3">
         {mode === "login" ? (
-          <>No account? <button onClick={onSwitch} className="underline underline-offset-2">Sign up</button>.</>
+          <>
+            No account?{" "}
+            <button onClick={onSwitch} className="underline underline-offset-2">
+              Sign up
+            </button>
+            .
+          </>
         ) : (
-          <>Already have an account? <button onClick={onSwitch} className="underline underline-offset-2">Log in</button>.</>
+          <>
+            Already have an account?{" "}
+            <button onClick={onSwitch} className="underline underline-offset-2">
+              Log in
+            </button>
+            .
+          </>
         )}
       </p>
 
@@ -169,21 +301,44 @@ function AuthCard({ mode = "login", onSwitch, onSuccess }: { mode?: "login" | "s
         <div className="h-px bg-slate-200 flex-1" />
       </div>
 
-      <button className={`mt-4 w-full ${brand.btn} ${brand.subtle} flex items-center justify-center gap-2`}>
-        <img alt="Google" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="h-5 w-5" />
+      <button
+        className={`mt-4 w-full ${brand.btn} ${brand.subtle} flex items-center justify-center gap-2`}
+      >
+        <img
+          alt="Google"
+          src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+          className="h-5 w-5"
+        />
         Continue with Google
       </button>
     </div>
   );
 }
 
-function AuthPage({ mode, onMode, onSuccess }: { mode: "login" | "signup"; onMode: (m: "login" | "signup") => void; onSuccess: () => void; }) {
-  const bg = "https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?q=80&w=1400&auto=format&fit=crop";
+function AuthPage({
+  mode,
+  onMode,
+  onSuccess,
+}: {
+  mode: "login" | "signup";
+  onMode: (m: "login" | "signup") => void;
+  onSuccess: () => void;
+}) {
+  const bg =
+    "https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?q=80&w=1400&auto=format&fit=crop";
   return (
     <div className="relative min-h-[calc(100vh-64px)] grid place-items-center">
-      <img src={bg} className="absolute inset-0 h-full w-full object-cover" alt="Pasta"/>
+      <img
+        src={bg}
+        className="absolute inset-0 h-full w-full object-cover"
+        alt="Pasta"
+      />
       <div className="absolute inset-0 bg-black/40" />
-      <AuthCard mode={mode} onSwitch={() => onMode(mode === "login" ? "signup" : "login")} onSuccess={onSuccess} />
+      <AuthCard
+        mode={mode}
+        onSwitch={() => onMode(mode === "login" ? "signup" : "login")}
+        onSuccess={onSuccess}
+      />
     </div>
   );
 }
@@ -191,10 +346,18 @@ function AuthPage({ mode, onMode, onSuccess }: { mode: "login" | "signup"; onMod
 function ImageDrop() {
   const [preview, setPreview] = useState<string | null>(null);
   return (
-    <div className={`flex items-center gap-4 p-4 ${brand.card} ${brand.radius}`}>
-      <label className={`h-28 w-28 ${brand.radius} grid place-items-center border-2 border-dashed border-slate-300 bg-slate-50 text-slate-500 cursor-pointer`}>
+    <div
+      className={`flex items-center gap-4 p-4 ${brand.card} ${brand.radius}`}
+    >
+      <label
+        className={`h-28 w-28 ${brand.radius} grid place-items-center border-2 border-dashed border-slate-300 bg-slate-50 text-slate-500 cursor-pointer`}
+      >
         {preview ? (
-          <img src={preview} alt="preview" className="h-full w-full object-cover rounded-xl" />
+          <img
+            src={preview}
+            alt="preview"
+            className="h-full w-full object-cover rounded-xl"
+          />
         ) : (
           <div className="flex flex-col items-center text-sm">
             <ImagePlus className="h-6 w-6 mb-1" />
@@ -553,7 +716,8 @@ function HomePage({
   const filtered = useMemo(() => {
     const s = q.toLowerCase();
     return items.filter(
-      r => r.name.toLowerCase().includes(s) || r.author.toLowerCase().includes(s)
+      (r) =>
+        r.name.toLowerCase().includes(s) || r.author.toLowerCase().includes(s),
     );
   }, [q, items]);
 
@@ -568,7 +732,7 @@ function HomePage({
         </p>
       </div>
       <div className="grid gap-4">
-        {filtered.map(r => (
+        {filtered.map((r) => (
           <RecipeCard
             key={r.id}
             recipe={r}
@@ -595,15 +759,13 @@ function FavouritesPage({
 }) {
   const [q, setQ] = useState("");
 
-  const favourites = useMemo(
-    () => items.filter(r => r.favourite),
-    [items]
-  );
+  const favourites = useMemo(() => items.filter((r) => r.favourite), [items]);
 
   const filtered = useMemo(() => {
     const s = q.toLowerCase();
     return favourites.filter(
-      r => r.name.toLowerCase().includes(s) || r.author.toLowerCase().includes(s)
+      (r) =>
+        r.name.toLowerCase().includes(s) || r.author.toLowerCase().includes(s),
     );
   }, [q, favourites]);
 
@@ -626,7 +788,7 @@ function FavouritesPage({
         </div>
       ) : (
         <div className="grid gap-4">
-          {filtered.map(r => (
+          {filtered.map((r) => (
             <RecipeCard
               key={r.id}
               recipe={r}
@@ -641,8 +803,6 @@ function FavouritesPage({
   );
 }
 
-
-
 // --- Router ---
 type Route = "home" | "upload" | "auth" | "favourites";
 
@@ -655,24 +815,37 @@ export default function App() {
   const [items, setItems] = useState<Recipe[]>(mockRecipes);
 
   const toggleLike = (id: string) =>
-    setItems(prev => prev.map(r => (r.id === id ? { ...r, liked: !r.liked } : r)));
+    setItems((prev) =>
+      prev.map((r) => (r.id === id ? {...r, liked: !r.liked} : r)),
+    );
   const toggleFav = (id: string) =>
-    setItems(prev => prev.map(r => (r.id === id ? { ...r, favourite: !r.favourite } : r)));
+    setItems((prev) =>
+      prev.map((r) => (r.id === id ? {...r, favourite: !r.favourite} : r)),
+    );
 
   return (
     <div className={`${brand.bg} text-slate-900 min-h-screen`}>
       <Navbar
         loggedIn={loggedIn}
         onRoute={setRoute}
-        onLogout={() => { setLoggedIn(false); setRoute("home"); }}
-        onLogin={() => { setRoute("auth"); setAuthMode("login"); }}
+        onLogout={() => {
+          setLoggedIn(false);
+          setRoute("home");
+        }}
+        onLogin={() => {
+          setRoute("auth");
+          setAuthMode("login");
+        }}
       />
 
       {route === "auth" ? (
         <AuthPage
           mode={authMode}
           onMode={setAuthMode}
-          onSuccess={() => { setLoggedIn(true); setRoute("home"); }}
+          onSuccess={() => {
+            setLoggedIn(true);
+            setRoute("home");
+          }}
         />
       ) : route === "upload" ? (
         loggedIn ? (
@@ -681,7 +854,10 @@ export default function App() {
           <AuthPage
             mode="login"
             onMode={setAuthMode}
-            onSuccess={() => { setLoggedIn(true); setRoute("upload"); }}
+            onSuccess={() => {
+              setLoggedIn(true);
+              setRoute("upload");
+            }}
           />
         )
       ) : route === "favourites" ? (
