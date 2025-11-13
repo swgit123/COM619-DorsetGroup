@@ -408,7 +408,9 @@ function IngredientsPicker({
   onChange: (next: PickedIngredient[]) => void;
 }) {
   const [query, setQuery] = React.useState("");
+  const [suggestions, setSuggestions] = React.useState<string[]>([]);
   const [selectedName, setSelectedName] = React.useState<string>("");
+
   const [qtyText, setQtyText] = React.useState<string>("");
   const [unit, setUnit] = React.useState<Unit>("g");
 
@@ -418,17 +420,33 @@ function IngredientsPicker({
   // Multi-select for existing pills
   const [selectedPills, setSelectedPills] = React.useState<Set<string>>(new Set());
 
-  const suggestions = React.useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const pool = INGREDIENTS.filter(
-      n => !value.some(v => v.name.toLowerCase() === n.toLowerCase())
-    );
-    if (!q) return [];
-    return pool.filter(n => n.toLowerCase().includes(q)).slice(0, 10);
-  }, [query, value]);
+  // Debounced query -> API call
+  React.useEffect(() => {
+    if (selectedName) return;          // don't fetch while choosing qty/unit
+    const q = query.trim();
+    if (q.length < 2) {                 // hide pills until at least 2 chars
+      setSuggestions([]);
+      return;
+    }
 
-  const qty = Number(qtyText);
-  const showQtyRow = !!selectedName;
+    const ac = new AbortController();
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/ingredients?q=${encodeURIComponent(q)}`, {
+          signal: ac.signal,
+        });
+        const data = await res.json();
+        const items: string[] = data?.items ?? [];
+        // Filter out names we already added
+        const existing = new Set(value.map(v => v.name.toLowerCase()));
+        setSuggestions(items.filter(n => !existing.has(n.toLowerCase())));
+      } catch {
+        // ignore aborts / network blips
+      }
+    }, 250);
+
+    return () => { clearTimeout(t); ac.abort(); };
+  }, [query, selectedName, value]);
 
   function resetAll() {
     setQuery("");
@@ -446,6 +464,7 @@ function IngredientsPicker({
     setTimeout(() => qtyRef.current?.focus(), 0);
   }
 
+  const qty = Number(qtyText);
   function addIngredient() {
     if (!selectedName) return;
     if (!qty || qty <= 0) return;
@@ -481,7 +500,7 @@ function IngredientsPicker({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && query.trim().length > 0 && suggestions.length === 1) {
+              if (e.key === "Enter" && query.trim().length >= 2 && suggestions.length === 1) {
                 e.preventDefault();
                 chooseIngredient(suggestions[0]);
               }
@@ -489,7 +508,9 @@ function IngredientsPicker({
             placeholder="Start typing an ingredient… (e.g., pasta)"
             className={`${brand.input} ${brand.pill} w-full px-4 py-2`}
           />
-          {query.trim().length > 0 && (
+
+          {/* Show pills only once the user is typing */}
+          {query.trim().length >= 2 && (
             <div className="flex flex-wrap gap-2">
               {suggestions.length === 0 ? (
                 <span className="text-sm text-slate-500">No matches.</span>
@@ -516,18 +537,14 @@ function IngredientsPicker({
           <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-sm">
             {selectedName}
           </span>
-          <button
-            type="button"
-            onClick={resetAll}
-            className={`${brand.btn} ${brand.subtle}`}
-          >
-            Cancel
-          </button>   
+          <button type="button" onClick={resetAll} className={`${brand.btn} ${brand.subtle}`}>
+            Change
+          </button>
         </div>
       )}
 
-      {/* Quantity + Unit appear together; Enter in qty submits with current unit */}
-      {showQtyRow && (
+      {/* Quantity + Unit together; Enter in qty submits with current unit */}
+      {selectedName && (
         <div className="grid gap-1">
           <label className="text-sm text-slate-600">How much?</label>
           <div className="flex flex-wrap items-center gap-3">
@@ -544,7 +561,7 @@ function IngredientsPicker({
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !!Number(qtyText) && Number(qtyText) > 0) {
                   e.preventDefault();
-                  addIngredient(); // submit with current unit
+                  addIngredient();
                 }
               }}
               placeholder="e.g., 200"
@@ -572,7 +589,7 @@ function IngredientsPicker({
         </div>
       )}
 
-      {/* Added ingredients as pills (wobble when selected) */}
+      {/* Added ingredients as pills (multi-select wobble + delete) */}
       <div className="flex flex-wrap gap-2 mt-1">
         {value.length === 0 ? (
           <div className="text-sm text-slate-500">No ingredients added yet.</div>
@@ -588,10 +605,10 @@ function IngredientsPicker({
                   "bg-white/90 border-slate-200 text-slate-800 hover:bg-slate-100",
                   isSelected ? "ring-2 ring-blue-400 animate-wobble" : ""
                 ].join(" ")}
-                title={`${ing.name} ${ing.quantity} ${ing.unit}`}
+                title={`${ing.name} — ${ing.quantity} ${ing.unit}`}
               >
                 <span className="pr-6">
-                  {ing.name} {ing.quantity} {ing.unit}
+                  {ing.name} — {ing.quantity} {ing.unit}
                 </span>
                 {isSelected && (
                   <button
@@ -623,6 +640,7 @@ function IngredientsPicker({
     </div>
   );
 }
+
 
 
 
