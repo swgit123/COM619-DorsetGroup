@@ -1,0 +1,8 @@
+venv/
+certbot/
+fullDomainName
+fullHostDomainName
+rootDomainName
+certArn
+validation.json
+iam-policy.json

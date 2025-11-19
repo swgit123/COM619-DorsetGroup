@@ -386,19 +386,67 @@ function ImageDrop() {
 
 // --- Ingredient types & data ---
 type Unit = "g" | "kg" | "ml" | "l" | "tsp" | "tbsp" | "cup" | "piece";
-interface PickedIngredient { name: string; quantity: number; unit: Unit; }
+interface PickedIngredient {
+  name: string;
+  quantity: number;
+  unit: Unit;
+}
 
 const INGREDIENTS = [
-  "Pasta","Spaghetti","Rice","Egg","Milk","Butter","Olive oil","Chicken breast",
-  "Beef mince","Pork","Salmon","Tuna","Shrimp","Onion","Garlic","Tomato",
-  "Tomato paste","Cherry tomatoes","Basil","Parsley","Coriander","Lemon",
-  "Lime","Carrot","Celery","Bell pepper","Spinach","Broccoli","Mushrooms",
-  "Potato","Sweet potato","Flour","Sugar","Brown sugar","Honey","Salt","Black pepper",
-  "Paprika","Cumin","Chili flakes","Soy sauce","Vinegar","Parmesan","Cheddar",
-  "Mozzarella","Yogurt","Cream","Coconut milk","Stock cube"
+  "Pasta",
+  "Spaghetti",
+  "Rice",
+  "Egg",
+  "Milk",
+  "Butter",
+  "Olive oil",
+  "Chicken breast",
+  "Beef mince",
+  "Pork",
+  "Salmon",
+  "Tuna",
+  "Shrimp",
+  "Onion",
+  "Garlic",
+  "Tomato",
+  "Tomato paste",
+  "Cherry tomatoes",
+  "Basil",
+  "Parsley",
+  "Coriander",
+  "Lemon",
+  "Lime",
+  "Carrot",
+  "Celery",
+  "Bell pepper",
+  "Spinach",
+  "Broccoli",
+  "Mushrooms",
+  "Potato",
+  "Sweet potato",
+  "Flour",
+  "Sugar",
+  "Brown sugar",
+  "Honey",
+  "Salt",
+  "Black pepper",
+  "Paprika",
+  "Cumin",
+  "Chili flakes",
+  "Soy sauce",
+  "Vinegar",
+  "Parmesan",
+  "Cheddar",
+  "Mozzarella",
+  "Yogurt",
+  "Cream",
+  "Coconut milk",
+  "Stock cube",
 ];
 
-function classJoin(...xs: (string|false|undefined)[]) { return xs.filter(Boolean).join(" "); }
+function classJoin(...xs: (string | false | undefined)[]) {
+  return xs.filter(Boolean).join(" ");
+}
 
 function IngredientsPicker({
   value,
@@ -418,7 +466,9 @@ function IngredientsPicker({
   const qtyRef = React.useRef<HTMLInputElement | null>(null);
 
   // Multi-select for existing pills
-  const [selectedPills, setSelectedPills] = React.useState<Set<string>>(new Set());
+  const [selectedPills, setSelectedPills] = React.useState<Set<string>>(
+    new Set(),
+  );
 
   // Debounced query -> API call
   React.useEffect(() => {
@@ -468,13 +518,13 @@ function IngredientsPicker({
   function addIngredient() {
     if (!selectedName) return;
     if (!qty || qty <= 0) return;
-    onChange([...value, { name: selectedName, quantity: qty, unit }]);
+    onChange([...value, {name: selectedName, quantity: qty, unit}]);
     resetAll();
   }
 
   function removeIngredient(name: string) {
-    onChange(value.filter(v => v.name.toLowerCase() !== name.toLowerCase()));
-    setSelectedPills(prev => {
+    onChange(value.filter((v) => v.name.toLowerCase() !== name.toLowerCase()));
+    setSelectedPills((prev) => {
       const next = new Set(prev);
       next.delete(name);
       return next;
@@ -482,7 +532,7 @@ function IngredientsPicker({
   }
 
   function togglePillSelection(name: string) {
-    setSelectedPills(prev => {
+    setSelectedPills((prev) => {
       const next = new Set(prev);
       if (next.has(name)) next.delete(name);
       else next.add(name);
@@ -559,7 +609,11 @@ function IngredientsPicker({
                 if (/^\d*\.?\d*$/.test(v)) setQtyText(v);
               }}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && !!Number(qtyText) && Number(qtyText) > 0) {
+                if (
+                  e.key === "Enter" &&
+                  !!Number(qtyText) &&
+                  Number(qtyText) > 0
+                ) {
                   e.preventDefault();
                   addIngredient();
                 }
@@ -573,9 +627,13 @@ function IngredientsPicker({
               className={`${brand.input} ${brand.pill} px-3 py-2`}
               title="Unit"
             >
-              {["g","kg","ml","l","tsp","tbsp","cup","piece"].map(u => (
-                <option key={u} value={u}>{u}</option>
-              ))}
+              {["g", "kg", "ml", "l", "tsp", "tbsp", "cup", "piece"].map(
+                (u) => (
+                  <option key={u} value={u}>
+                    {u}
+                  </option>
+                ),
+              )}
             </select>
             <button
               type="button"
@@ -592,7 +650,9 @@ function IngredientsPicker({
       {/* Added ingredients as pills (multi-select wobble + delete) */}
       <div className="flex flex-wrap gap-2 mt-1">
         {value.length === 0 ? (
-          <div className="text-sm text-slate-500">No ingredients added yet.</div>
+          <div className="text-sm text-slate-500">
+            No ingredients added yet.
+          </div>
         ) : (
           value.map((ing) => {
             const isSelected = selectedPills.has(ing.name);
@@ -603,7 +663,7 @@ function IngredientsPicker({
                 className={[
                   "relative select-none cursor-pointer px-3 py-1 rounded-full border text-sm",
                   "bg-white/90 border-slate-200 text-slate-800 hover:bg-slate-100",
-                  isSelected ? "ring-2 ring-blue-400 animate-wobble" : ""
+                  isSelected ? "ring-2 ring-blue-400 animate-wobble" : "",
                 ].join(" ")}
                 title={`${ing.name} — ${ing.quantity} ${ing.unit}`}
               >
@@ -613,7 +673,10 @@ function IngredientsPicker({
                 {isSelected && (
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); removeIngredient(ing.name); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeIngredient(ing.name);
+                    }}
                     className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-red-500 text-white grid place-items-center shadow hover:bg-red-600"
                     aria-label={`Delete ${ing.name}`}
                     title="Delete"
@@ -630,8 +693,13 @@ function IngredientsPicker({
       {/* wobble animation */}
       <style jsx global>{`
         @keyframes wobble {
-          0%, 100% { transform: rotate(-0.6deg) translateY(0); }
-          50% { transform: rotate(0.6deg) translateY(-1px); }
+          0%,
+          100% {
+            transform: rotate(-0.6deg) translateY(0);
+          }
+          50% {
+            transform: rotate(0.6deg) translateY(-1px);
+          }
         }
         .animate-wobble {
           animation: wobble 250ms ease-in-out infinite;
@@ -664,7 +732,9 @@ function UploadPage() {
 
           {/* Name */}
           <div className="grid gap-2">
-            <label className="text-sm font-medium text-slate-700">Recipe Name</label>
+            <label className="text-sm font-medium text-slate-700">
+              Recipe Name
+            </label>
             <input
               className={`${brand.input} ${brand.pill} px-4 py-2`}
               placeholder="e.g., Garlic Butter Shrimp"
@@ -673,7 +743,9 @@ function UploadPage() {
 
           {/* Description */}
           <div className="grid gap-2">
-            <label className="text-sm font-medium text-slate-700">Description</label>
+            <label className="text-sm font-medium text-slate-700">
+              Description
+            </label>
             <textarea
               rows={4}
               className={`${brand.input} ${brand.radius} p-3`}
@@ -683,7 +755,9 @@ function UploadPage() {
 
           {/* Ingredients (picker) */}
           <div className="grid gap-2">
-            <label className="text-sm font-medium text-slate-700">Ingredients</label>
+            <label className="text-sm font-medium text-slate-700">
+              Ingredients
+            </label>
             <IngredientsPicker value={ingredients} onChange={setIngredients} />
           </div>
 
@@ -698,7 +772,9 @@ function UploadPage() {
           </div>
 
           <div className="flex items-center justify-end gap-3 mt-2">
-            <button className={`${brand.btn} ${brand.subtle}`}>Save Draft</button>
+            <button className={`${brand.btn} ${brand.subtle}`}>
+              Save Draft
+            </button>
             <button
               className={`${brand.btn} ${brand.primary}`}
               onClick={() =>
@@ -716,7 +792,6 @@ function UploadPage() {
     </div>
   );
 }
-
 
 function HomePage({
   loggedIn,

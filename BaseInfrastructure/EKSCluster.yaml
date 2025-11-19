@@ -4,7 +4,7 @@ Description: EKS Cluster with Node Group
 Parameters:
   ClusterName:
     Type: String
-    Default: "COM619-EKS-Cluster"
+    Default: "AlexCOM619-EKS-Cluster"
     Description: "The name of the EKS Cluster"
 
 Resources:
@@ -45,12 +45,6 @@ Resources:
       ResourcesVpcConfig:
         SubnetIds: !Split [",", !ImportValue "COM619-VPC-SubnetIds"]
         SecurityGroupIds: !Split [",", !ImportValue "COM619-VPC-SecurityGroups"]
-
-  AddonVpcCni:
-    Type: AWS::EKS::Addon
-    Properties:
-      ClusterName: !Ref EKSCluster
-      AddonName: vpc-cni
 
   AddonCoreDns:
     Type: AWS::EKS::Addon
