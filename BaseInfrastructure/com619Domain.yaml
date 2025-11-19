@@ -39,12 +39,11 @@ Parameters:
   RootHostedZone:
     Type: String
     Description: "The top level hosted zone"
-    
+
   EndPointName:
     Type: String
     Description: "The name ofthe IF2Node Name"
     Default: com619
-
 
 Metadata:
   AWS::CloudFormation::Interface:
@@ -59,17 +58,16 @@ Metadata:
           - PrivateSubnet02Block
 
 Resources:
-
   # # Create our sub domain below the top level domain
   # Com619DeploymentHostedZone:
   #     Type: AWS::Route53::HostedZone
   #     Properties:
   #        HostedZoneConfig:
   #            Comment: Hosted zone for instance
-  #        Name:  
+  #        Name:
   #           Fn::Sub: "${DeploymentNamespace}.${DomainName}"
 
-  # # add an entry into the top level domain to allow the 
+  # # add an entry into the top level domain to allow the
   # # sub domain (Com619DeploymentHostedZone) to work
   # DeploymentRootHostedZoneRecordSet:
   #   Type: AWS::Route53::RecordSet
@@ -90,13 +88,13 @@ Resources:
   #     Name:
   #       Fn::Sub: "${EndPointName}.${DeploymentNamespace}.${DomainName}"
 
-  # # add an nameserver entry into the deployment level domain to allow the 
+  # # add an nameserver entry into the deployment level domain to allow the
   # # sub domain (Com619DeploymentHostedZone) to work
   # Com619HostedZoneRecordSet:
   #   Type: AWS::Route53::RecordSet
   #   Properties:
   #       HostedZoneId: !Ref Com619DeploymentHostedZone
-  #       Name:   
+  #       Name:
   #         Fn::Sub: "${EndPointName}.${DeploymentNamespace}.${DomainName}."
   #       Type: NS
   #       TTL: 60
@@ -358,7 +356,6 @@ Outputs:
     Value: !Ref VPC
     Export:
       Name: !Sub "${AWS::StackName}-VpcId"
-
 
   # Com619DeploymentHostedZone:
   #   Description: "The New hosted sub-domain to use for the Deployment"
