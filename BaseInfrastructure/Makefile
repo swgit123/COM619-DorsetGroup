@@ -16,8 +16,12 @@ deployApp:
 		--namespace=default || true
 	@kubectl apply -f com619Deployment.yaml
 
+updateApp: buildApp
+	@kubectl rollout restart deployment com619-deployment
+	@kubectl rollout status deployment com619-deployment
+
 undeployApp:
-	@kubectl delete -f com619Deployment.yaml
+	@kubectl delete -f com619Deployment.yaml --ignore-not-found
 
 buildApp:
 	# First we need to create the ECR or check if it exists
