@@ -28,6 +28,24 @@ Parameters:
     Default: 192.168.192.0/18
     Description: CidrBlock for private subnet 02 within the VPC
 
+  DeploymentNamespace:
+    Type: String
+    Description: "The deployment namespace"
+
+  DomainName:
+    Type: String
+    Description: "The domain name for the cluster (e.g., example.com)"
+
+  RootHostedZone:
+    Type: String
+    Description: "The top level hosted zone"
+    
+  EndPointName:
+    Type: String
+    Description: "The name ofthe IF2Node Name"
+    Default: com619
+
+
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -41,6 +59,49 @@ Metadata:
           - PrivateSubnet02Block
 
 Resources:
+
+  # # Create our sub domain below the top level domain
+  # Com619DeploymentHostedZone:
+  #     Type: AWS::Route53::HostedZone
+  #     Properties:
+  #        HostedZoneConfig:
+  #            Comment: Hosted zone for instance
+  #        Name:  
+  #           Fn::Sub: "${DeploymentNamespace}.${DomainName}"
+
+  # # add an entry into the top level domain to allow the 
+  # # sub domain (Com619DeploymentHostedZone) to work
+  # DeploymentRootHostedZoneRecordSet:
+  #   Type: AWS::Route53::RecordSet
+  #   Properties:
+  #     HostedZoneId: !Ref RootHostedZone
+  #     Name:
+  #       Fn::Sub: "${DeploymentNamespace}.${DomainName}."
+  #     Type: NS
+  #     TTL: 60
+  #     ResourceRecords: !GetAtt Com619DeploymentHostedZone.NameServers
+
+  # # create a new hosted zone to store the api gateway under
+  # Com619HostedZone:
+  #   Type: AWS::Route53::HostedZone
+  #   Properties:
+  #     HostedZoneConfig:
+  #       Comment: Hosted zone for com619
+  #     Name:
+  #       Fn::Sub: "${EndPointName}.${DeploymentNamespace}.${DomainName}"
+
+  # # add an nameserver entry into the deployment level domain to allow the 
+  # # sub domain (Com619DeploymentHostedZone) to work
+  # Com619HostedZoneRecordSet:
+  #   Type: AWS::Route53::RecordSet
+  #   Properties:
+  #       HostedZoneId: !Ref Com619DeploymentHostedZone
+  #       Name:   
+  #         Fn::Sub: "${EndPointName}.${DeploymentNamespace}.${DomainName}."
+  #       Type: NS
+  #       TTL: 60
+  #       ResourceRecords: !GetAtt Com619HostedZone.NameServers
+
   VPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -297,3 +358,23 @@ Outputs:
     Value: !Ref VPC
     Export:
       Name: !Sub "${AWS::StackName}-VpcId"
+
+
+  # Com619DeploymentHostedZone:
+  #   Description: "The New hosted sub-domain to use for the Deployment"
+  #   Value: !Ref Com619DeploymentHostedZone
+  #   Export:
+  #     Name: !Sub "${AWS::StackName}-Com619DeploymentHostedZone"
+
+  # Com619HostedZone:
+  #   Description: The com619 hosted zone
+  #   Value: !Ref Com619HostedZone
+  #   Export:
+  #     Name: !Sub "${DeploymentNamespace}-Com619HostedZone"
+
+  # Com619FullHost:
+  #   Description: The full host name for the com619 endpoint
+  #   Value:
+  #     Fn::Sub: "${EndPointName}.${DeploymentNamespace}.${DomainName}"
+  #   Export:
+  #     Name: !Sub "${DeploymentNamespace}-Com619FullHost"
