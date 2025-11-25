@@ -91,11 +91,13 @@ CouchDB runs as a StatefulSet with three pods (couchdb-0, couchdb-1, couchdb-2) 
 
 #### Authentication & Configuration
 
-The cluster is configured with:
+A default CouchDB setup is deployed with the following credentials:
 
 - Username: `admin`
 - Password: `password`
 - Node names set via `COUCHDB_NODENAME` environment variable using pod metadata
+
+Deployment uses different deployment credentials for security.
 
 #### Data Storage
 
@@ -111,8 +113,8 @@ To run disaster case tests without affecting production deployment/cluster Couch
 
 Prerequesits:
 
-* docker installed
-* kubectl installed
+- docker installed
+- kubectl installed
 
 **Install Minikube:**
 
@@ -138,7 +140,7 @@ kubectl port-forward svc/couchdb 5984:5984
 
 CouchDB will be accessible at `http://localhost:5984`
 
-From there CouchDB API will also be accessable at localhost:5984. This allows for python requests to be used to interact with the database. 
+From there CouchDB API will also be accessable at localhost:5984. This allows for python requests to be used to interact with the database.
 
 ## Front End
 
