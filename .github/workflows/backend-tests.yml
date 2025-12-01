@@ -1,0 +1,43 @@
+name: Backend Tests
+
+on:
+pull_request:
+
+jobs:
+  build:
+    name: Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./CouchDB
+
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v5
+
+      - name: Start CouchDB
+        uses: iamssen/couchdb-github-action@master
+        with:
+          couchdb-version: "3.5.1"
+
+      - name: Test endpoint
+        run: |
+          curl -f http://127.0.0.1:5984/
+
+      - name: Test auth
+        run: |
+          curl -X POST -H "Content-Type: application/json; charset=utf-8" -d '{"name": "admin", "password": "password"}' http://127.0.0.1:5984/_session
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run pytest
+        run: |
+          pytest .test_setup_couchdb.py
