@@ -1,4 +1,6 @@
-// frontend/src/app/api/ingredients/route.ts
+import fs from "node:fs/promises";
+import path from "node:path";
+import dotenv from "dotenv";
 export const runtime = "nodejs";
 import {NextRequest, NextResponse} from "next/server";
 
@@ -19,7 +21,8 @@ export async function GET(req: NextRequest) {
   }
 
   // const apiKey = process.env.FDC_API_KEY;
-  const apiKey = "JefFFdNmsHJj4uja6c2MxXRZhSt5EXFCaCmJAzeV";
+  const apiKey = process.env.API_KEY;
+  console.log("Using API Key:", apiKey);
   if (!apiKey) {
     console.error("FDC_API_KEY missing");
     return NextResponse.json(
