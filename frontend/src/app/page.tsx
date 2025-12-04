@@ -641,12 +641,6 @@ function IngredientsPicker({
   );
 }
 
-
-
-
-
-
-
 function UploadPage() {
   const [ingredients, setIngredients] = useState<PickedIngredient[]>([]);
 
