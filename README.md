@@ -9,7 +9,7 @@
 
 ## Infrastructure
 
-![Infrastructure Diagram](Infrastructure.svg)
+![Infrastructure Diagram](infrastructure.drawio.svg)
 
 The infrastructure is deployed on AWS using EKS, with CouchDB for data storage and an Application Load Balancer for HTTPS traffic routing via Route53.
 
