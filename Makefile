@@ -13,5 +13,8 @@ buildApp:
 deployApp:
 	${MAKE} -C BaseInfrastructure deployApp
  
+updateApp:
+	${MAKE} -C BaseInfrastructure updateApp
+
 undeployApp:
 	${MAKE} -C BaseInfrastructure undeployApp

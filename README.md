@@ -148,7 +148,9 @@ Description for Front End goes here.
 
 ## Back End
 
-Description for Back End goes here.
+The back end is a python file server.py with custom routes/endpoints.
+
+The backend runs on port 5000 and can be accessed internally on the deployment pod via localhost:5000. The backend and front end are deployed together inside the same k8s pod. This allows for easy access via couchdb:5984 for the database and localhost:5000 for the back end logic.
 
 ## GitHub Actions
 
@@ -156,4 +158,4 @@ Description for GitHub Actions goes here.
 
 ## Pre Commits
 
-Description for Pre Commits goes here.
+The project uses Husky to manage Git hooks for automated code quality checks. Pre-commit hooks run automatically before each commit to ensure code standards are maintained across the codebase.

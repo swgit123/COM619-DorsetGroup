@@ -1,3 +1,4 @@
+# DOCKERFILE FOR FRONT END ONLY - NO BACKEND WILL BE CONSTRUCTED HERE
 # Install dependencies
 FROM node:20-alpine AS deps
 WORKDIR /app
