@@ -3,7 +3,7 @@ import path from "node:path";
 import dotenv from "dotenv";
 
 // load .env.local (NOT committed to git)
-dotenv.config({ path: path.join(process.cwd(), ".env.local") });
+dotenv.config({path: path.join(process.cwd(), ".env.local")});
 
 const API_KEY = "JefFFdNmsHJj4uja6c2MxXRZhSt5EXFCaCmJAzeV";
 if (!API_KEY) {
@@ -74,7 +74,7 @@ async function main() {
   console.log(`Collected ${list.length} unique ingredient names.`);
 
   const outPath = path.join(process.cwd(), "data");
-  await fs.mkdir(outPath, { recursive: true });
+  await fs.mkdir(outPath, {recursive: true});
 
   const file = path.join(outPath, "ingredients.json");
   await fs.writeFile(file, JSON.stringify(list, null, 2), "utf8");

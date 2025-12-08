@@ -7,6 +7,9 @@ COM619_SERVICE_NAME:= recipeshare
 deployCouchDB:
 	@kubectl apply -f couchdb.yaml
 
+undeployCouchDB:
+	@kubectl delete -f couchdb.yaml --ignore-not-found
+
 deployApp:
 	# Create ECR pull secret
 	@kubectl create secret docker-registry ecr-registry-secret \

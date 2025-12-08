@@ -18,3 +18,6 @@ updateApp:
 
 undeployApp:
 	${MAKE} -C BaseInfrastructure undeployApp
+
+undeploydb:
+	${MAKE} -C BaseInfrastructure undeployCouchDB
