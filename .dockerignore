@@ -1,0 +1,66 @@
+# Dependencies
+node_modules
+*/node_modules
+
+# Git
+.git
+.gitignore
+
+# Build outputs
+.next
+dist
+build
+coverage
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+
+# Documentation
+*.md
+README*
+
+# Config files not needed in container
+.prettierrc*
+.prettierignore
+eslint*
+tsconfig.json
+next.config.ts
+postcss.config.mjs
+
+# Infrastructure files
+BaseInfrastructure/
+.github/
+.husky/
+Makefile
+infrastructure.drawio.svg
+
+# Test files
+**/*test*
+**/*spec*
+
+# Temporary files
+*.tmp
+*.temp
+
+# Docker files
+Dockerfile*
+.dockerignore
+
+# Source maps
+*.map
