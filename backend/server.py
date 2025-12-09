@@ -2,7 +2,10 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import json
 import os
+from pathlib import Path
 import requests
+
+from setup_db import ensure_databases
 
 COUCHDB_URL = os.getenv('COUCHDB_URL')
 USERNAME = os.getenv('USERNAME')
@@ -10,6 +13,13 @@ PASSWORD = os.getenv('PASSWORD')
 
 RECIPES_PATH = 'recipes'
 USERS_PATH = 'users'
+
+
+BASE_DIR = Path(__file__).resolve().parent
+ensure_databases({
+    RECIPES_PATH: BASE_DIR / 'demo.json',
+    USERS_PATH: None,
+})
 
 
 app = Flask(__name__)
