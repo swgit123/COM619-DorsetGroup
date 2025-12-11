@@ -1,6 +1,8 @@
-// frontend/src/app/api/ingredients/route.ts
+import fs from "node:fs/promises";
+import path from "node:path";
+import dotenv from "dotenv";
 export const runtime = "nodejs";
-import { NextRequest, NextResponse } from "next/server";
+import {NextRequest, NextResponse} from "next/server";
 
 function toTitleCase(s: string) {
   return s
@@ -11,18 +13,22 @@ function toTitleCase(s: string) {
 }
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
+  const {searchParams} = new URL(req.url);
   const q = (searchParams.get("q") || "").trim();
 
   if (q.length < 2) {
-    return NextResponse.json({ items: [] }, { status: 200 });
+    return NextResponse.json({items: []}, {status: 200});
   }
 
   // const apiKey = process.env.FDC_API_KEY;
-  const apiKey = "JefFFdNmsHJj4uja6c2MxXRZhSt5EXFCaCmJAzeV";
+  const apiKey = process.env.API_KEY;
+  console.log("Using API Key:", apiKey);
   if (!apiKey) {
     console.error("FDC_API_KEY missing");
-    return NextResponse.json({ items: [], error: "Missing FDC_API_KEY" }, { status: 500 });
+    return NextResponse.json(
+      {items: [], error: "Missing FDC_API_KEY"},
+      {status: 500},
+    );
   }
 
   const url =
@@ -39,14 +45,14 @@ export async function GET(req: NextRequest) {
         "Content-Type": "application/json",
         "X-Api-Key": apiKey,
       },
-      next: { revalidate: 60 * 60 * 24 },
+      next: {revalidate: 60 * 60 * 24},
     });
 
     if (!resp.ok) {
       console.error("FDC error", resp.status);
       return NextResponse.json(
-        { items: [], error: `FDC error ${resp.status}` },
-        { status: 502 }
+        {items: [], error: `FDC error ${resp.status}`},
+        {status: 502},
       );
     }
 
@@ -67,12 +73,12 @@ export async function GET(req: NextRequest) {
     }
 
     const items = Array.from(names).slice(0, 30);
-    return NextResponse.json({ items });
+    return NextResponse.json({items});
   } catch (err) {
     console.error("FDC network error", err);
     return NextResponse.json(
-      { items: [], error: "Network/parse error" },
-      { status: 500 }
+      {items: [], error: "Network/parse error"},
+      {status: 500},
     );
   }
 }
