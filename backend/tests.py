@@ -36,14 +36,14 @@ def test_user_lifecycle():
 	password = "secret123"
 
 	# Create user
-	print(f"[test] POST /users ({username})")
-	res = requests.post(_url("/users"), json={"username": username, "password": password})
+	print(f"[test] POST /accounts ({username})")
+	res = requests.post(_url("/accounts"), json={"username": username, "password": password})
 	assert_ok(res, expected=201)
 	print("[pass] create user")
 
 	# Get user
-	print(f"[test] GET /users/{username}")
-	res = requests.get(_url(f"/users/{username}"))
+	print(f"[test] GET /accounts/{username}")
+	res = requests.get(_url(f"/accounts/{username}"))
 	data = assert_ok(res)
 	assert data.get("_id") == username
 	print("[pass] fetch user")

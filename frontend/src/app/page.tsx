@@ -15,6 +15,11 @@ import {
   EyeOff,
   ChefHat,
   Star,
+  X,
+  Settings,
+  User,
+  Lock,
+  ChevronDown,
 } from "lucide-react";
 
 // --- Simple design tokens ---
@@ -33,13 +38,30 @@ const brand = {
 
 // --- Types ---
 interface Recipe {
-  id: string;
+  _id?: string;
+  _rev?: string;
+  id?: string;
   name: string;
-  author: string;
-  image: string;
+  description?: string;
+  author?: string; // Display name (can change)
+  authorId?: string; // Immutable user ID reference
+  image?: string; // Base64 data URL or external URL
+  ingredients?: Array<{
+    name: string;
+    amount: number;
+    unit: string;
+  }>;
+  steps?: string;
   liked?: boolean;
   favourite?: boolean;
   isPublic?: boolean;
+}
+
+interface User {
+  _id: string;
+  _rev?: string;
+  username: string;
+  password: string;
 }
 
 // --- Mock data ---
@@ -80,12 +102,18 @@ function Navbar({
   onRoute,
   onLogout,
   onLogin,
+  currentUser,
+  userProfileImage,
 }: {
   loggedIn: boolean;
   onRoute: (r: Route) => void;
   onLogout: () => void;
   onLogin: () => void;
+  currentUser: string;
+  userProfileImage?: string;
 }) {
+  const [showDropdown, setShowDropdown] = useState(false);
+
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur">
       <div className="mx-auto max-w-6xl px-4 py-3 flex items-center gap-3 justify-between">
@@ -128,16 +156,62 @@ function Navbar({
               <LogIn className="h-4 w-4" /> Sign in
             </button>
           ) : (
-            <button
-              onClick={onLogout}
-              className={`${brand.btn} ${brand.subtle} flex items-center gap-2`}
-            >
-              <LogOut className="h-4 w-4" /> Sign out
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowDropdown(!showDropdown)}
+                className="flex items-center gap-2 hover:bg-slate-100 rounded-xl px-3 py-2 transition-colors"
+              >
+                <div className="h-10 w-10 grid place-items-center rounded-full bg-gradient-to-br from-slate-200 to-slate-300 border border-slate-300 overflow-hidden">
+                  {userProfileImage ? (
+                    <img src={userProfileImage} alt="Profile" className="h-full w-full object-cover" />
+                  ) : (
+                    <UserRound className="h-5 w-5 text-slate-700" />
+                  )}
+                </div>
+                <ChevronDown className="h-4 w-4 text-slate-600" />
+              </button>
+
+              {showDropdown && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setShowDropdown(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-50">
+                    <div className="px-4 py-2 border-b border-slate-200">
+                      <p className="text-sm font-medium text-slate-900">{currentUser}</p>
+                      <p className="text-xs text-slate-500">Manage your account</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setShowDropdown(false);
+                        onRoute("settings");
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                    >
+                      <Settings className="h-4 w-4" />
+                      Settings
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowDropdown(false);
+                        onLogout();
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 border-t border-slate-200"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Sign out
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           )}
-          <div className="h-10 w-10 grid place-items-center rounded-full bg-gradient-to-br from-slate-200 to-slate-300 border border-slate-300">
-            <UserRound className="h-5 w-5 text-slate-700" />
-          </div>
+          {!loggedIn && (
+            <div className="h-10 w-10 grid place-items-center rounded-full bg-gradient-to-br from-slate-200 to-slate-300 border border-slate-300">
+              <UserRound className="h-5 w-5 text-slate-700" />
+            </div>
+          )}
         </div>
       </div>
     </header>
@@ -175,19 +249,26 @@ function RecipeCard({
   onFav: (id: string) => void;
   onOpen: (id: string) => void;
 }) {
+  const recipeId = recipe._id || recipe.id || "";
+  const recipeImage = recipe.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=400&auto=format&fit=crop";
+  const recipeAuthor = recipe.author || "Anonymous";
+
   return (
     <article className={`flex gap-4 p-3 ${brand.card} ${brand.radius}`}>
       <img
-        src={recipe.image}
+        src={recipeImage}
         alt={recipe.name}
         className="h-24 w-24 rounded-xl object-cover"
       />
       <div className="flex-1 min-w-0">
         <h3 className="font-semibold text-slate-900 truncate">{recipe.name}</h3>
-        <p className="text-sm text-slate-600">by {recipe.author}</p>
+        <p className="text-sm text-slate-600">by {recipeAuthor}</p>
+        {recipe.description && (
+          <p className="text-xs text-slate-500 mt-1 line-clamp-2">{recipe.description}</p>
+        )}
         <div className="mt-3 flex items-center gap-3">
           <button
-            onClick={() => onLike(recipe.id)}
+            onClick={() => onLike(recipeId)}
             className={`${brand.btn} ${brand.ghost} flex items-center gap-1`}
           >
             <Heart
@@ -196,7 +277,7 @@ function RecipeCard({
             Like
           </button>
           <button
-            onClick={() => onFav(recipe.id)}
+            onClick={() => onFav(recipeId)}
             className={`${brand.btn} ${brand.ghost} flex items-center gap-1`}
           >
             <Bookmark
@@ -205,7 +286,7 @@ function RecipeCard({
             Save
           </button>
           <button
-            onClick={() => onOpen(recipe.id)}
+            onClick={() => onOpen(recipeId)}
             className={`${brand.btn} ${brand.ghost} flex items-center gap-1`}
           >
             <MessageCircle className="h-4 w-4" /> Details
@@ -216,6 +297,123 @@ function RecipeCard({
   );
 }
 
+function RecipeModal({
+  recipe,
+  onClose,
+  onLike,
+  onFav,
+}: {
+  recipe: Recipe | null;
+  onClose: () => void;
+  onLike: (id: string) => void;
+  onFav: (id: string) => void;
+}) {
+  if (!recipe) return null;
+
+  const recipeId = recipe._id || recipe.id || "";
+  const recipeImage = recipe.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=800&auto=format&fit=crop";
+  const recipeAuthor = recipe.author || "Anonymous";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div 
+        className="absolute inset-0" 
+        onClick={onClose}
+      />
+      <div className={`relative w-full max-w-3xl max-h-[90vh] overflow-y-auto ${brand.card} ${brand.radius} p-6 shadow-2xl`}>
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 transition-colors"
+          aria-label="Close"
+        >
+          <X className="h-5 w-5 text-slate-600" />
+        </button>
+
+        {/* Recipe Image */}
+        <img
+          src={recipeImage}
+          alt={recipe.name}
+          className="w-full h-64 object-cover rounded-xl mb-6"
+        />
+
+        {/* Recipe Header */}
+        <div className="mb-6">
+          <h2 className="text-3xl font-bold text-slate-900 mb-2">{recipe.name}</h2>
+          <p className="text-slate-600">by {recipeAuthor}</p>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-3 mb-6 pb-6 border-b border-slate-200">
+          <button
+            onClick={() => onLike(recipeId)}
+            className={`${brand.btn} ${brand.ghost} flex items-center gap-2`}
+          >
+            <Heart
+              className={`h-5 w-5 ${recipe.liked ? "fill-red-500 stroke-red-500" : ""}`}
+            />
+            {recipe.liked ? "Liked" : "Like"}
+          </button>
+          <button
+            onClick={() => onFav(recipeId)}
+            className={`${brand.btn} ${brand.ghost} flex items-center gap-2`}
+          >
+            <Bookmark
+              className={`h-5 w-5 ${recipe.favourite ? "fill-slate-800 stroke-slate-800" : ""}`}
+            />
+            {recipe.favourite ? "Saved" : "Save"}
+          </button>
+        </div>
+
+        {/* Description */}
+        {recipe.description && (
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">Description</h3>
+            <p className="text-slate-700 leading-relaxed">{recipe.description}</p>
+          </div>
+        )}
+
+        {/* Ingredients */}
+        {recipe.ingredients && recipe.ingredients.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-slate-900 mb-3">Ingredients</h3>
+            <ul className="space-y-2">
+              {recipe.ingredients.map((ingredient, idx) => (
+                <li key={idx} className="flex items-center gap-2 text-slate-700">
+                  <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                  <span>
+                    {ingredient.amount} {ingredient.unit} {ingredient.name}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Steps */}
+        {recipe.steps && (
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-slate-900 mb-3">Instructions</h3>
+            <div className="text-slate-700 leading-relaxed whitespace-pre-line">
+              {recipe.steps}
+            </div>
+          </div>
+        )}
+
+        {/* Close button at bottom */}
+        <div className="flex justify-end pt-4 border-t border-slate-200">
+          <button
+            onClick={onClose}
+            className={`${brand.btn} ${brand.primary}`}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AuthCard({
   mode = "login",
   onSwitch,
@@ -223,9 +421,60 @@ function AuthCard({
 }: {
   mode?: "login" | "signup";
   onSwitch: () => void;
-  onSuccess: () => void;
+  onSuccess: (username: string) => void;
 }) {
   const [showPw, setShowPw] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async () => {
+    setError("");
+    setLoading(true);
+
+    try {
+      if (mode === "signup") {
+        // Create user
+        const response = await fetch("/api/accounts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setError(data.error || "Failed to create account");
+          setLoading(false);
+          return;
+        }
+
+        onSuccess(username);
+      } else {
+        // Login
+        const response = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.valid) {
+          setError(data.reason || data.error || "Invalid credentials");
+          setLoading(false);
+          return;
+        }
+
+        onSuccess(username);
+      }
+    } catch (err) {
+      setError("Network error. Please try again.");
+      setLoading(false);
+    }
+  };
+
   return (
     <div
       className={`max-w-md w-full p-6 ${brand.card} ${brand.radius} shadow-xl`}
@@ -233,17 +482,25 @@ function AuthCard({
       <div className="flex items-center gap-2 mb-4">
         <Star className="h-5 w-5 text-yellow-500" />
         <h2 className="text-xl font-semibold text-slate-900">
-          {mode === "login" ? "Login / Sign Up" : "Create an account"}
+          {mode === "login" ? "Login" : "Create an account"}
         </h2>
       </div>
 
+      {error && (
+        <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
       <label className="block text-sm font-medium text-slate-700">
-        Email Address
+        Username
       </label>
       <input
-        type="email"
+        type="text"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
         className={`mt-1 mb-3 w-full ${brand.input} ${brand.pill} px-4 py-2`}
-        placeholder="you@example.com"
+        placeholder="your_username"
       />
 
       <label className="block text-sm font-medium text-slate-700">
@@ -252,6 +509,13 @@ function AuthCard({
       <div className="relative mt-1 mb-4">
         <input
           type={showPw ? "text" : "password"}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && username && password) {
+              handleSubmit();
+            }
+          }}
           className={`w-full ${brand.input} ${brand.pill} px-4 py-2`}
           placeholder="••••••••"
         />
@@ -269,10 +533,11 @@ function AuthCard({
       </div>
 
       <button
-        onClick={onSuccess}
-        className={`w-full ${brand.btn} ${brand.primary}`}
+        onClick={handleSubmit}
+        disabled={loading || !username || !password}
+        className={`w-full ${brand.btn} ${brand.primary} disabled:opacity-50 disabled:cursor-not-allowed`}
       >
-        {mode === "login" ? "Login" : "Create account"}
+        {loading ? "Please wait..." : mode === "login" ? "Login" : "Create account"}
       </button>
 
       <p className="text-center text-sm text-slate-600 mt-3">
@@ -294,23 +559,6 @@ function AuthCard({
           </>
         )}
       </p>
-
-      <div className="mt-4 flex items-center gap-3">
-        <div className="h-px bg-slate-200 flex-1" />
-        <span className="text-xs text-slate-500">or</span>
-        <div className="h-px bg-slate-200 flex-1" />
-      </div>
-
-      <button
-        className={`mt-4 w-full ${brand.btn} ${brand.subtle} flex items-center justify-center gap-2`}
-      >
-        <img
-          alt="Google"
-          src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-          className="h-5 w-5"
-        />
-        Continue with Google
-      </button>
     </div>
   );
 }
@@ -322,7 +570,7 @@ function AuthPage({
 }: {
   mode: "login" | "signup";
   onMode: (m: "login" | "signup") => void;
-  onSuccess: () => void;
+  onSuccess: (username: string) => void;
 }) {
   const bg =
     "https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?q=80&w=1400&auto=format&fit=crop";
@@ -343,18 +591,23 @@ function AuthPage({
   );
 }
 
-function ImageDrop() {
-  const [preview, setPreview] = useState<string | null>(null);
+function ImageDrop({
+  value,
+  onChange,
+}: {
+  value: string | null;
+  onChange: (imageData: string | null) => void;
+}) {
   return (
     <div
       className={`flex items-center gap-4 p-4 ${brand.card} ${brand.radius}`}
     >
       <label
-        className={`h-28 w-28 ${brand.radius} grid place-items-center border-2 border-dashed border-slate-300 bg-slate-50 text-slate-500 cursor-pointer`}
+        className={`h-28 w-28 ${brand.radius} grid place-items-center border-2 border-dashed border-slate-300 bg-slate-50 text-slate-500 cursor-pointer hover:border-slate-400 transition-colors`}
       >
-        {preview ? (
+        {value ? (
           <img
-            src={preview}
+            src={value}
             alt="preview"
             className="h-full w-full object-cover rounded-xl"
           />
@@ -370,15 +623,33 @@ function ImageDrop() {
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (!file) return;
+            
+            // Check file size (5MB limit)
+            if (file.size > 5 * 1024 * 1024) {
+              alert("Image must be less than 5MB");
+              return;
+            }
+            
             const reader = new FileReader();
-            reader.onload = (ev) => setPreview(String(ev.target?.result));
+            reader.onload = (ev) => onChange(String(ev.target?.result));
             reader.readAsDataURL(file);
           }}
           className="hidden"
         />
       </label>
-      <div className="text-xs text-slate-500">
-        JPG/PNG up to 5MB. Add multiple photos after initial save.
+      <div className="flex-1">
+        <div className="text-xs text-slate-500 mb-2">
+          JPG/PNG up to 5MB
+        </div>
+        {value && (
+          <button
+            type="button"
+            onClick={() => onChange(null)}
+            className="text-xs text-red-600 hover:text-red-700 underline"
+          >
+            Remove image
+          </button>
+        )}
       </div>
     </div>
   );
@@ -721,8 +992,69 @@ function IngredientsPicker({
   );
 }
 
-function UploadPage() {
+function UploadPage({ currentUser, onPublish }: { currentUser: string; onPublish: () => void }) {
   const [ingredients, setIngredients] = useState<PickedIngredient[]>([]);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [steps, setSteps] = useState("");
+  const [imageData, setImageData] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handlePublish = async () => {
+    if (!name.trim()) {
+      setError("Recipe name is required");
+      return;
+    }
+
+    setError("");
+    setLoading(true);
+
+    try {
+      const payload = {
+        name: name.trim(),
+        description: description.trim(),
+        ingredients: ingredients.map((ing) => ({
+          name: ing.name,
+          amount: ing.quantity,
+          unit: ing.unit,
+        })),
+        steps: steps.trim(),
+        author: currentUser, // Display name
+        authorId: currentUser, // Immutable user ID
+        isPublic: true,
+        image: imageData, // Include base64 image data
+      };
+
+      const response = await fetch("/api/recipes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Failed to create recipe");
+        setLoading(false);
+        return;
+      }
+
+      // Reset form
+      setName("");
+      setDescription("");
+      setSteps("");
+      setIngredients([]);
+      setImageData(null);
+      setLoading(false);
+      
+      alert("Recipe published successfully!");
+      onPublish();
+    } catch (err) {
+      setError("Network error. Please try again.");
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-4xl p-4 sm:p-6">
@@ -733,8 +1065,14 @@ function UploadPage() {
           </h2>
         </div>
 
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
         <div className="grid gap-4">
-          <ImageDrop />
+          <ImageDrop value={imageData} onChange={setImageData} />
 
           {/* Name */}
           <div className="grid gap-2">
@@ -742,6 +1080,8 @@ function UploadPage() {
               Recipe Name
             </label>
             <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               className={`${brand.input} ${brand.pill} px-4 py-2`}
               placeholder="e.g., Garlic Butter Shrimp"
             />
@@ -753,6 +1093,8 @@ function UploadPage() {
               Description
             </label>
             <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               rows={4}
               className={`${brand.input} ${brand.radius} p-3`}
               placeholder="Short description of your recipe"
@@ -771,6 +1113,8 @@ function UploadPage() {
           <div className="grid gap-2">
             <label className="text-sm font-medium text-slate-700">Steps</label>
             <textarea
+              value={steps}
+              onChange={(e) => setSteps(e.target.value)}
               rows={5}
               className={`${brand.input} ${brand.radius} p-3`}
               placeholder="1) Boil pasta..."
@@ -778,19 +1122,12 @@ function UploadPage() {
           </div>
 
           <div className="flex items-center justify-end gap-3 mt-2">
-            <button className={`${brand.btn} ${brand.subtle}`}>
-              Save Draft
-            </button>
             <button
-              className={`${brand.btn} ${brand.primary}`}
-              onClick={() =>
-                console.log("Submit payload:", {
-                  // name, description, steps would be read from state when you wire the form
-                  ingredients,
-                })
-              }
+              onClick={handlePublish}
+              disabled={loading || !name.trim()}
+              className={`${brand.btn} ${brand.primary} disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-              Publish
+              {loading ? "Publishing..." : "Publish"}
             </button>
           </div>
         </div>
@@ -804,21 +1141,44 @@ function HomePage({
   items,
   onLike,
   onFav,
+  loading,
+  userFavourites,
+  userLikes,
 }: {
   loggedIn: boolean;
   items: Recipe[];
   onLike: (id: string) => void;
   onFav: (id: string) => void;
+  loading: boolean;
+  userFavourites: string[];
+  userLikes: string[];
 }) {
   const [q, setQ] = useState("");
+  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
 
   const filtered = useMemo(() => {
     const s = q.toLowerCase();
     return items.filter(
       (r) =>
-        r.name.toLowerCase().includes(s) || r.author.toLowerCase().includes(s),
+        r.name.toLowerCase().includes(s) || 
+        (r.author && r.author.toLowerCase().includes(s)) ||
+        (r.description && r.description.toLowerCase().includes(s))
     );
   }, [q, items]);
+
+  // Merge userFavourites and userLikes into recipes
+  const recipesWithUserData = useMemo(() => {
+    return filtered.map((r) => ({
+      ...r,
+      favourite: userFavourites.includes(r._id || r.id || ""),
+      liked: userLikes.includes(r._id || r.id || ""),
+    }));
+  }, [filtered, userFavourites, userLikes]);
+
+  const handleOpenRecipe = (id: string) => {
+    const recipe = recipesWithUserData.find((r) => (r._id || r.id) === id);
+    if (recipe) setSelectedRecipe(recipe);
+  };
 
   return (
     <div className="mx-auto max-w-6xl p-4 sm:p-6">
@@ -830,17 +1190,37 @@ function HomePage({
             : "You are viewing as a guest. Sign in to like, save, and comment."}
         </p>
       </div>
-      <div className="grid gap-4">
-        {filtered.map((r) => (
-          <RecipeCard
-            key={r.id}
-            recipe={r}
-            onLike={onLike}
-            onFav={onFav}
-            onOpen={() => alert(`Open recipe ${r.name}`)}
-          />
-        ))}
-      </div>
+      {loading ? (
+        <div className={`p-6 ${brand.card} ${brand.radius} text-center text-slate-600`}>
+          Loading recipes...
+        </div>
+      ) : recipesWithUserData.length === 0 ? (
+        <div className={`p-6 ${brand.card} ${brand.radius} text-center text-slate-600`}>
+          No recipes found.
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {recipesWithUserData.map((r) => (
+            <RecipeCard
+              key={r._id || r.id}
+              recipe={r}
+              onLike={onLike}
+              onFav={onFav}
+              onOpen={handleOpenRecipe}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Recipe Modal */}
+      {selectedRecipe && (
+        <RecipeModal
+          recipe={selectedRecipe}
+          onClose={() => setSelectedRecipe(null)}
+          onLike={onLike}
+          onFav={onFav}
+        />
+      )}
     </div>
   );
 }
@@ -850,23 +1230,46 @@ function FavouritesPage({
   items,
   onLike,
   onFav,
+  userFavourites,
+  userLikes,
 }: {
   loggedIn: boolean;
   items: Recipe[];
   onLike: (id: string) => void;
   onFav: (id: string) => void;
+  userFavourites: string[];
+  userLikes: string[];
 }) {
   const [q, setQ] = useState("");
+  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
 
-  const favourites = useMemo(() => items.filter((r) => r.favourite), [items]);
+  // Filter items to only show user's favourites
+  const favourites = useMemo(() => {
+    return items.filter((r) => userFavourites.includes(r._id || r.id || ""));
+  }, [items, userFavourites]);
 
   const filtered = useMemo(() => {
     const s = q.toLowerCase();
     return favourites.filter(
       (r) =>
-        r.name.toLowerCase().includes(s) || r.author.toLowerCase().includes(s),
+        r.name.toLowerCase().includes(s) || 
+        (r.author && r.author.toLowerCase().includes(s)),
     );
   }, [q, favourites]);
+
+  // Mark all as favourites and include likes for display
+  const recipesWithUserData = useMemo(() => {
+    return filtered.map((r) => ({ 
+      ...r, 
+      favourite: true,
+      liked: userLikes.includes(r._id || r.id || ""),
+    }));
+  }, [filtered, userLikes]);
+
+  const handleOpenRecipe = (id: string) => {
+    const recipe = recipesWithUserData.find((r) => (r._id || r.id) === id);
+    if (recipe) setSelectedRecipe(recipe);
+  };
 
   return (
     <div className="mx-auto max-w-6xl p-4 sm:p-6">
@@ -879,7 +1282,7 @@ function FavouritesPage({
         </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {recipesWithUserData.length === 0 ? (
         <div className={`p-6 ${brand.card} ${brand.radius} text-slate-600`}>
           {loggedIn
             ? "You haven’t saved any recipes yet."
@@ -887,40 +1290,462 @@ function FavouritesPage({
         </div>
       ) : (
         <div className="grid gap-4">
-          {filtered.map((r) => (
+          {recipesWithUserData.map((r) => (
             <RecipeCard
-              key={r.id}
+              key={r._id || r.id}
               recipe={r}
               onLike={onLike}
               onFav={onFav}
-              onOpen={() => alert(`Open recipe ${r.name}`)}
+              onOpen={handleOpenRecipe}
             />
           ))}
         </div>
+      )}
+
+      {/* Recipe Modal */}
+      {selectedRecipe && (
+        <RecipeModal
+          recipe={selectedRecipe}
+          onClose={() => setSelectedRecipe(null)}
+          onLike={onLike}
+          onFav={onFav}
+        />
       )}
     </div>
   );
 }
 
+function SettingsPage({
+  currentUser,
+  userProfileImage,
+  onUpdateProfile,
+}: {
+  currentUser: string;
+  userProfileImage?: string;
+  onUpdateProfile: () => void;
+}) {
+  const [profileImage, setProfileImage] = useState<string | null>(userProfileImage || null);
+  const [newUsername, setNewUsername] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const handleUpdateProfileImage = async () => {
+    if (!profileImage) {
+      setError("Please select an image");
+      return;
+    }
+
+    setError("");
+    setSuccess("");
+    setLoading(true);
+
+    try {
+      const response = await fetch(`/api/accounts/${currentUser}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profileImage }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Failed to update profile image");
+        setLoading(false);
+        return;
+      }
+
+      setSuccess("Profile image updated successfully!");
+      setLoading(false);
+      onUpdateProfile();
+    } catch (err) {
+      setError("Network error. Please try again.");
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateUsername = async () => {
+    if (!newUsername.trim()) {
+      setError("Please enter a new username");
+      return;
+    }
+
+    setError("");
+    setSuccess("");
+    setLoading(true);
+
+    try {
+      const response = await fetch(`/api/accounts/${currentUser}/username`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newUsername: newUsername.trim() }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Failed to update username");
+        setLoading(false);
+        return;
+      }
+
+      setSuccess("Username updated successfully! Please log in again.");
+      setNewUsername("");
+      setLoading(false);
+    } catch (err) {
+      setError("Network error. Please try again.");
+      setLoading(false);
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setError("Please fill in all password fields");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError("New passwords do not match");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setError("New password must be at least 6 characters");
+      return;
+    }
+
+    setError("");
+    setSuccess("");
+    setLoading(true);
+
+    try {
+      const response = await fetch(`/api/accounts/${currentUser}/password`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Failed to update password");
+        setLoading(false);
+        return;
+      }
+
+      setSuccess("Password updated successfully!");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setLoading(false);
+    } catch (err) {
+      setError("Network error. Please try again.");
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="mx-auto max-w-4xl p-4 sm:p-6">
+      <div className={`p-6 ${brand.card} ${brand.radius} mb-6`}>
+        <h2 className="text-2xl font-bold text-slate-900 mb-2 flex items-center gap-2">
+          <Settings className="h-6 w-6" />
+          Account Settings
+        </h2>
+        <p className="text-sm text-slate-600">Manage your profile and account preferences</p>
+      </div>
+
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700">
+          {success}
+        </div>
+      )}
+
+      {/* Profile Image Section */}
+      <div className={`p-6 ${brand.card} ${brand.radius} mb-4`}>
+        <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+          <User className="h-5 w-5" />
+          Profile Picture
+        </h3>
+        <div className="flex items-center gap-6">
+          <div className="h-24 w-24 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 border-2 border-slate-300 overflow-hidden">
+            {profileImage ? (
+              <img src={profileImage} alt="Profile" className="h-full w-full object-cover" />
+            ) : (
+              <div className="h-full w-full grid place-items-center">
+                <UserRound className="h-12 w-12 text-slate-600" />
+              </div>
+            )}
+          </div>
+          <div className="flex-1">
+            <ImageDrop value={profileImage} onChange={setProfileImage} />
+            <button
+              onClick={handleUpdateProfileImage}
+              disabled={loading || !profileImage}
+              className={`mt-3 ${brand.btn} ${brand.primary} disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              {loading ? "Updating..." : "Update Profile Picture"}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Username Section */}
+      <div className={`p-6 ${brand.card} ${brand.radius} mb-4`}>
+        <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+          <User className="h-5 w-5" />
+          Change Username
+        </h3>
+        <p className="text-sm text-slate-600 mb-4">Current username: <span className="font-medium">{currentUser}</span></p>
+        <div className="grid gap-3">
+          <input
+            type="text"
+            value={newUsername}
+            onChange={(e) => setNewUsername(e.target.value)}
+            placeholder="Enter new username"
+            className={`${brand.input} ${brand.pill} px-4 py-2`}
+          />
+          <button
+            onClick={handleUpdateUsername}
+            disabled={loading || !newUsername.trim()}
+            className={`${brand.btn} ${brand.primary} disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            {loading ? "Updating..." : "Update Username"}
+          </button>
+          <p className="text-xs text-slate-500">Note: You will need to log in again after changing your username.</p>
+        </div>
+      </div>
+
+      {/* Password Section */}
+      <div className={`p-6 ${brand.card} ${brand.radius}`}>
+        <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+          <Lock className="h-5 w-5" />
+          Change Password
+        </h3>
+        <div className="grid gap-3">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Current Password</label>
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Enter current password"
+              className={`w-full ${brand.input} ${brand.pill} px-4 py-2`}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">New Password</label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Enter new password"
+              className={`w-full ${brand.input} ${brand.pill} px-4 py-2`}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Confirm New Password</label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm new password"
+              className={`w-full ${brand.input} ${brand.pill} px-4 py-2`}
+            />
+          </div>
+          <button
+            onClick={handleUpdatePassword}
+            disabled={loading || !currentPassword || !newPassword || !confirmPassword}
+            className={`${brand.btn} ${brand.primary} disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            {loading ? "Updating..." : "Update Password"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // --- Router ---
-type Route = "home" | "upload" | "auth" | "favourites";
+type Route = "home" | "upload" | "auth" | "favourites" | "settings";
 
 export default function App() {
   const [route, setRoute] = useState<Route>("home");
   const [loggedIn, setLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState("");
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+  const [userProfileImage, setUserProfileImage] = useState<string>("");
 
   // Lifted recipe state so Home & Favourites see the same data
-  const [items, setItems] = useState<Recipe[]>(mockRecipes);
+  const [items, setItems] = useState<Recipe[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [userFavourites, setUserFavourites] = useState<string[]>([]);
+  const [userLikes, setUserLikes] = useState<string[]>([]);
 
-  const toggleLike = (id: string) =>
-    setItems((prev) =>
-      prev.map((r) => (r.id === id ? {...r, liked: !r.liked} : r)),
-    );
-  const toggleFav = (id: string) =>
-    setItems((prev) =>
-      prev.map((r) => (r.id === id ? {...r, favourite: !r.favourite} : r)),
-    );
+  // Fetch recipes on mount
+  React.useEffect(() => {
+    fetchRecipes();
+  }, []);
+
+  // Fetch user favourites, likes, and profile when logged in
+  React.useEffect(() => {
+    if (loggedIn && currentUser) {
+      fetchUserFavourites();
+      fetchUserLikes();
+      fetchUserProfile();
+    } else {
+      setUserFavourites([]);
+      setUserLikes([]);
+      setUserProfileImage("");
+    }
+  }, [loggedIn, currentUser]);
+
+  const fetchRecipes = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/recipes");
+      const data = await response.json();
+      
+      if (response.ok) {
+        // Filter out design documents and system docs
+        const recipes = Array.isArray(data) 
+          ? data.filter((r: Recipe) => !r._id?.startsWith("_design"))
+          : [];
+        setItems(recipes);
+      }
+    } catch (err) {
+      console.error("Failed to fetch recipes:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUserFavourites = async () => {
+    if (!currentUser) return;
+    
+    try {
+      const response = await fetch(`/api/favourites?username=${currentUser}`);
+      const data = await response.json();
+      
+      if (response.ok) {
+        setUserFavourites(data.favourites || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch favourites:", err);
+    }
+  };
+
+  const fetchUserLikes = async () => {
+    if (!currentUser) return;
+    
+    try {
+      const response = await fetch(`/api/likes?username=${currentUser}`);
+      const data = await response.json();
+      
+      if (response.ok) {
+        setUserLikes(data.likes || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch likes:", err);
+    }
+  };
+
+  const fetchUserProfile = async () => {
+    if (!currentUser) return;
+    
+    try {
+      const response = await fetch(`/api/accounts/${currentUser}`);
+      const data = await response.json();
+      
+      if (response.ok) {
+        setUserProfileImage(data.profileImage || "");
+      }
+    } catch (err) {
+      console.error("Failed to fetch user profile:", err);
+    }
+  };
+
+  const toggleLike = async (id: string) => {
+    if (!loggedIn || !currentUser) {
+      alert("Please sign in to like recipes");
+      return;
+    }
+
+    const isLiked = userLikes.includes(id);
+
+    try {
+      if (isLiked) {
+        // Remove like
+        const response = await fetch(
+          `/api/likes?username=${currentUser}&recipeId=${id}`,
+          { method: 'DELETE' }
+        );
+
+        if (response.ok) {
+          setUserLikes((prev) => prev.filter((lId) => lId !== id));
+        }
+      } else {
+        // Add like
+        const response = await fetch('/api/likes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: currentUser, recipeId: id }),
+        });
+
+        if (response.ok) {
+          setUserLikes((prev) => [...prev, id]);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to toggle like:", err);
+      alert("Failed to update like. Please try again.");
+    }
+  };
+
+  const toggleFav = async (id: string) => {
+    if (!loggedIn || !currentUser) {
+      alert("Please sign in to save favourites");
+      return;
+    }
+
+    const isFavourite = userFavourites.includes(id);
+
+    try {
+      if (isFavourite) {
+        // Remove from favourites
+        const response = await fetch(
+          `/api/favourites?username=${currentUser}&recipeId=${id}`,
+          { method: 'DELETE' }
+        );
+
+        if (response.ok) {
+          setUserFavourites((prev) => prev.filter((fId) => fId !== id));
+        }
+      } else {
+        // Add to favourites
+        const response = await fetch('/api/favourites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: currentUser, recipeId: id }),
+        });
+
+        if (response.ok) {
+          setUserFavourites((prev) => [...prev, id]);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to toggle favourite:", err);
+      alert("Failed to update favourite. Please try again.");
+    }
+  };
 
   return (
     <div className={`${brand.bg} text-slate-900 min-h-screen`}>
@@ -929,32 +1754,44 @@ export default function App() {
         onRoute={setRoute}
         onLogout={() => {
           setLoggedIn(false);
+          setCurrentUser("");
+          setUserProfileImage("");
           setRoute("home");
         }}
         onLogin={() => {
           setRoute("auth");
           setAuthMode("login");
         }}
+        currentUser={currentUser}
+        userProfileImage={userProfileImage}
       />
 
       {route === "auth" ? (
         <AuthPage
           mode={authMode}
           onMode={setAuthMode}
-          onSuccess={() => {
+          onSuccess={(username) => {
             setLoggedIn(true);
+            setCurrentUser(username);
             setRoute("home");
           }}
         />
       ) : route === "upload" ? (
         loggedIn ? (
-          <UploadPage />
+          <UploadPage 
+            currentUser={currentUser}
+            onPublish={() => {
+              fetchRecipes();
+              setRoute("home");
+            }}
+          />
         ) : (
           <AuthPage
             mode="login"
             onMode={setAuthMode}
-            onSuccess={() => {
+            onSuccess={(username) => {
               setLoggedIn(true);
+              setCurrentUser(username);
               setRoute("upload");
             }}
           />
@@ -964,14 +1801,37 @@ export default function App() {
           loggedIn={loggedIn}
           items={items}
           onLike={toggleLike}
+          userFavourites={userFavourites}
+          userLikes={userLikes}
           onFav={toggleFav}
         />
+      ) : route === "settings" ? (
+        loggedIn ? (
+          <SettingsPage
+            currentUser={currentUser}
+            userProfileImage={userProfileImage}
+            onUpdateProfile={fetchUserProfile}
+          />
+        ) : (
+          <AuthPage
+            mode="login"
+            onMode={setAuthMode}
+            onSuccess={(username) => {
+              setLoggedIn(true);
+              setCurrentUser(username);
+              setRoute("settings");
+            }}
+          />
+        )
       ) : (
         <HomePage
           loggedIn={loggedIn}
           items={items}
           onLike={toggleLike}
           onFav={toggleFav}
+          loading={loading}
+          userFavourites={userFavourites}
+          userLikes={userLikes}
         />
       )}
 
