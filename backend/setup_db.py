@@ -19,7 +19,7 @@ AUTH: Optional[Union[Tuple[str, str], AuthBase]] = (
 
 BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_DATABASES: Dict[str, Optional[Path]] = {
-    "recipes": BASE_DIR / "demo.json",
+    "recipes": None,
     "users": None,
 }
 

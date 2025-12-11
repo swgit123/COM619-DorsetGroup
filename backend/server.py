@@ -17,7 +17,7 @@ USERS_PATH = 'users'
 
 BASE_DIR = Path(__file__).resolve().parent
 ensure_databases({
-    RECIPES_PATH: BASE_DIR / 'demo.json',
+    RECIPES_PATH: None,
     USERS_PATH: None,
 })
 
@@ -147,6 +147,80 @@ def delete_recipe(recipe_id):
         return jsonify({'message': 'Recipe deleted successfully', 'id': recipe_id})
     except requests.exceptions.RequestException as e:
         return jsonify({'error': 'Failed to delete recipe', 'details': str(e)}), 500
+
+
+#region User Routes
+@app.route('/users', methods=['POST'])
+def create_user():
+    """Create a new user document keyed by username."""
+    try:
+        payload = request.get_json() or {}
+        username = payload.get('username')
+        password = payload.get('password')
+
+        if not username or not password:
+            return jsonify({'error': 'username and password are required'}), 400
+
+        user_doc = {
+            '_id': username,
+            'username': username,
+            'password': password,  # NOTE: For real apps, hash the password instead of storing plain text.
+        }
+
+        url = f"{COUCHDB_URL}/{USERS_PATH}/{username}"
+        response = requests.put(url, json=user_doc, auth=(USERNAME, PASSWORD))
+
+        if response.status_code == 409:
+            return jsonify({'error': 'User already exists'}), 409
+
+        response.raise_for_status()
+        return jsonify(response.json()), 201
+    except requests.exceptions.RequestException as e:
+        return jsonify({'error': 'Failed to create user', 'details': str(e)}), 500
+
+
+@app.route('/users/<username>', methods=['GET'])
+def get_user(username):
+    """Fetch a user document by username."""
+    try:
+        url = f"{COUCHDB_URL}/{USERS_PATH}/{username}"
+        response = requests.get(url, auth=(USERNAME, PASSWORD))
+
+        if response.status_code == 404:
+            return jsonify({'error': 'User not found'}), 404
+
+        response.raise_for_status()
+        return jsonify(response.json())
+    except requests.exceptions.RequestException as e:
+        return jsonify({'error': 'Failed to retrieve user', 'details': str(e)}), 500
+
+
+@app.route('/auth/login', methods=['POST'])
+def validate_credentials():
+    """Check whether a username/password combination is valid."""
+    try:
+        payload = request.get_json() or {}
+        username = payload.get('username')
+        password = payload.get('password')
+
+        if not username or not password:
+            return jsonify({'error': 'username and password are required'}), 400
+
+        url = f"{COUCHDB_URL}/{USERS_PATH}/{username}"
+        response = requests.get(url, auth=(USERNAME, PASSWORD))
+
+        if response.status_code == 404:
+            return jsonify({'valid': False, 'reason': 'User not found'}), 404
+
+        response.raise_for_status()
+        user_doc = response.json()
+
+        if user_doc.get('password') == password:
+            return jsonify({'valid': True, 'username': username}), 200
+
+        return jsonify({'valid': False, 'reason': 'Invalid password'}), 401
+    except requests.exceptions.RequestException as e:
+        return jsonify({'error': 'Failed to validate credentials', 'details': str(e)}), 500
 
 
 if __name__ == '__main__':
