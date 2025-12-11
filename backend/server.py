@@ -22,6 +22,45 @@ ensure_databases({
 })
 
 
+def validate_recipe_payload(payload):
+    """Validate recipe shape: name, description, ingredients[]."""
+    if not isinstance(payload, dict):
+        return False, 'Payload must be a JSON object'
+
+    name = payload.get('name')
+    if not name or not isinstance(name, str):
+        return False, 'name is required and must be a string'
+
+    description = payload.get('description')
+    if description is not None and not isinstance(description, str):
+        return False, 'description must be a string if provided'
+
+    ingredients = payload.get('ingredients', [])
+    if ingredients is None:
+        ingredients = []
+    if not isinstance(ingredients, list):
+        return False, 'ingredients must be a list'
+
+    for idx, ingredient in enumerate(ingredients):
+        if not isinstance(ingredient, dict):
+            return False, f'ingredients[{idx}] must be an object'
+
+        in_name = ingredient.get('name')
+        unit = ingredient.get('unit')
+        amount = ingredient.get('amount')
+
+        if not in_name or not isinstance(in_name, str):
+            return False, f'ingredients[{idx}].name is required and must be a string'
+        if not unit or not isinstance(unit, str):
+            return False, f'ingredients[{idx}].unit is required and must be a string'
+        if not isinstance(amount, (int, float)):
+            return False, f'ingredients[{idx}].amount is required and must be a number'
+        if amount < 0:
+            return False, f'ingredients[{idx}].amount must be non-negative'
+
+    return True, None
+
+
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend communication
 
@@ -80,10 +119,10 @@ def post_recipe():
         
         if not recipe_data:
             return jsonify({'error': 'No data provided'}), 400
-        
-        # Validate required fields
-        if 'recipe_name' not in recipe_data:
-            return jsonify({'error': 'recipe_name is required'}), 400
+
+        is_valid, error = validate_recipe_payload(recipe_data)
+        if not is_valid:
+            return jsonify({'error': error}), 400
         
         url = f"{COUCHDB_URL}/{RECIPES_PATH}"
         response = requests.post(url, json=recipe_data, auth=(USERNAME, PASSWORD))
@@ -101,6 +140,10 @@ def update_recipe(recipe_id):
         
         if not recipe_data:
             return jsonify({'error': 'No data provided'}), 400
+
+        is_valid, error = validate_recipe_payload(recipe_data)
+        if not is_valid:
+            return jsonify({'error': error}), 400
         
         # Get the current document to retrieve the _rev
         get_url = f"{COUCHDB_URL}/{RECIPES_PATH}/{recipe_id}"
