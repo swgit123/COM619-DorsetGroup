@@ -22,7 +22,8 @@ AUTH: Optional[Union[Tuple[str, str], AuthBase]] = (
 BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_DATABASES: Dict[str, Optional[Path]] = {
     "recipes": None,
-    "users": None,
+    "accounts": None,
+    "_users": None,  
 }
 
 
@@ -113,4 +114,5 @@ if __name__ == "__main__":
     try:
         ensure_databases()
     except RequestException as exc:
-        raise SystemExit(f"CouchDB setup failed: {exc}")
+        print('failed to ensure db')
+        print(f"CouchDB setup failed: {exc}")
