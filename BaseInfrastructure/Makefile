@@ -7,6 +7,9 @@ COM619_SERVICE_NAME:= recipeshare
 deployCouchDB:
 	@kubectl apply -f couchdb.yaml
 
+undeployCouchDB:
+	@kubectl delete -f couchdb.yaml --ignore-not-found
+
 deployApp:
 	# Create ECR pull secret
 	@kubectl create secret docker-registry ecr-registry-secret \
@@ -30,8 +33,8 @@ buildApp:
 	# Need to authenticate ourselves to ECR
 	@aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin 114788392298.dkr.ecr.eu-west-2.amazonaws.com
 
-	# now build image
-	@cd ../frontend && docker build -t com619app .
+	# now build image from root (includes frontend and backend)
+	@cd .. && docker build -t com619app .
 	@docker tag com619app:latest 114788392298.dkr.ecr.eu-west-2.amazonaws.com/com619app:latest
 	@docker push 114788392298.dkr.ecr.eu-west-2.amazonaws.com/com619app:latest
 

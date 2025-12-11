@@ -472,9 +472,10 @@ function IngredientsPicker({
 
   // Debounced query -> API call
   React.useEffect(() => {
-    if (selectedName) return;          // don't fetch while choosing qty/unit
+    if (selectedName) return; // don't fetch while choosing qty/unit
     const q = query.trim();
-    if (q.length < 2) {                 // hide pills until at least 2 chars
+    if (q.length < 2) {
+      // hide pills until at least 2 chars
       setSuggestions([]);
       return;
     }
@@ -488,14 +489,17 @@ function IngredientsPicker({
         const data = await res.json();
         const items: string[] = data?.items ?? [];
         // Filter out names we already added
-        const existing = new Set(value.map(v => v.name.toLowerCase()));
-        setSuggestions(items.filter(n => !existing.has(n.toLowerCase())));
+        const existing = new Set(value.map((v) => v.name.toLowerCase()));
+        setSuggestions(items.filter((n) => !existing.has(n.toLowerCase())));
       } catch {
         // ignore aborts / network blips
       }
     }, 250);
 
-    return () => { clearTimeout(t); ac.abort(); };
+    return () => {
+      clearTimeout(t);
+      ac.abort();
+    };
   }, [query, selectedName, value]);
 
   function resetAll() {
@@ -550,7 +554,11 @@ function IngredientsPicker({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && query.trim().length >= 2 && suggestions.length === 1) {
+              if (
+                e.key === "Enter" &&
+                query.trim().length >= 2 &&
+                suggestions.length === 1
+              ) {
                 e.preventDefault();
                 chooseIngredient(suggestions[0]);
               }
@@ -587,7 +595,11 @@ function IngredientsPicker({
           <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-sm">
             {selectedName}
           </span>
-          <button type="button" onClick={resetAll} className={`${brand.btn} ${brand.subtle}`}>
+          <button
+            type="button"
+            onClick={resetAll}
+            className={`${brand.btn} ${brand.subtle}`}
+          >
             Change
           </button>
         </div>
@@ -708,12 +720,6 @@ function IngredientsPicker({
     </div>
   );
 }
-
-
-
-
-
-
 
 function UploadPage() {
   const [ingredients, setIngredients] = useState<PickedIngredient[]>([]);
