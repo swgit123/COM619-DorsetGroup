@@ -10,8 +10,11 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: yaml-lint
-        id: yamllint   
+        id: yamllint
         uses: ibiqlik/action-yamllint@v3
+        with:
+          config_file: .yamllint
+          strict: false
 
       - name: logfile path
         run: echo "${{ steps.yamllint.outputs.logfile }}"
