@@ -1,4 +1,3 @@
-"""Utility helpers for preparing CouchDB databases before the API starts."""
 from __future__ import annotations
 
 import json
@@ -9,8 +8,11 @@ from typing import Dict, Iterable, Optional, Tuple, Union
 import requests
 from requests.auth import AuthBase
 from requests.exceptions import RequestException
+from dotenv import load_dotenv
 
-COUCHDB_URL = os.getenv("COUCHDB_URL")
+load_dotenv()
+
+COUCHDB_URL = os.getenv("COUCHDB_URL", "http://127.0.0.1:5984")
 USERNAME = os.getenv("USERNAME")
 PASSWORD = os.getenv("PASSWORD")
 AUTH: Optional[Union[Tuple[str, str], AuthBase]] = (

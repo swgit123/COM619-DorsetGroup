@@ -4,6 +4,9 @@ import json
 import os
 from pathlib import Path
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from setup_db import ensure_databases
 
@@ -16,10 +19,10 @@ USERS_PATH = 'users'
 
 
 BASE_DIR = Path(__file__).resolve().parent
-ensure_databases({
-    RECIPES_PATH: None,
-    USERS_PATH: None,
-})
+# ensure_databases({
+#     RECIPES_PATH: None,
+#     USERS_PATH: None,
+# })
 
 
 def validate_recipe_payload(payload):
@@ -207,7 +210,7 @@ def create_user():
         user_doc = {
             '_id': username,
             'username': username,
-            'password': password,  # NOTE: For real apps, hash the password instead of storing plain text.
+            'password': password, # TODO: I'm going to add hash encryption in a bit
         }
 
         url = f"{COUCHDB_URL}/{USERS_PATH}/{username}"
