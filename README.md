@@ -1,3 +1,6 @@
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=swgit123_COM619-DorsetGroup&metric=alert_status&token=f9df53fcfedb23f55f95f3e41fc6d417f6051342)](https://sonarcloud.io/summary/new_code?id=swgit123_COM619-DorsetGroup)
+
+
 # Table of Contents
 
 - [Infrastructure](#infrastructure)
