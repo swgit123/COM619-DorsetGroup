@@ -11,7 +11,7 @@ load_dotenv()
 from setup_db import ensure_databases
 
 COUCHDB_URL = os.getenv('COUCHDB_URL')
-USERNAME = os.getenv('USERNAME')
+USERNAME = os.getenv('USER_NAME')
 PASSWORD = os.getenv('PASSWORD')
 
 RECIPES_PATH = 'recipes'
@@ -19,10 +19,10 @@ USERS_PATH = 'users'
 
 
 BASE_DIR = Path(__file__).resolve().parent
-# ensure_databases({
-#     RECIPES_PATH: None,
-#     USERS_PATH: None,
-# })
+ensure_databases({
+    RECIPES_PATH: None,
+    USERS_PATH: None,
+})
 
 
 def validate_recipe_payload(payload):

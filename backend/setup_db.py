@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 COUCHDB_URL = os.getenv("COUCHDB_URL", "http://127.0.0.1:5984")
-USERNAME = os.getenv("USERNAME")
+USERNAME = os.getenv("USER_NAME")
 PASSWORD = os.getenv("PASSWORD")
 AUTH: Optional[Union[Tuple[str, str], AuthBase]] = (
     (USERNAME, PASSWORD) if USERNAME and PASSWORD else None
@@ -45,6 +45,11 @@ def ensure_database(db_name: str) -> bool:
     """Create the database if it does not exist."""
     url = f"{COUCHDB_URL}/{db_name}"
     response = requests.head(url, auth=AUTH, timeout=10)
+
+    if response.status_code == 401:
+        raise RuntimeError(
+            "Unauthorized when contacting CouchDB. Check COUCHDB_URL, USERNAME, and PASSWORD."
+        )
 
     if response.status_code == 200:
         return False
