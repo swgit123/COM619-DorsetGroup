@@ -5,6 +5,12 @@ COM619_SERVICE_NAME:= recipeshare
 
 
 deployCouchDB:
+# by passing in a secret we can load in an env variable from console.
+# This way only the person deploying will know the credentials. No secrets will be committed
+	@kubectl create secret generic couchdb-credentials \
+		--from-literal=username=$${COUCHDB_USER} \
+		--from-literal=password=$${COUCHDB_PASSWORD} \
+		--dry-run=client -o yaml | kubectl apply -f -
 	@kubectl apply -f couchdb.yaml
 
 undeployCouchDB:
