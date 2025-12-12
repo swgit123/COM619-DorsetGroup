@@ -23,6 +23,16 @@ spec:
           env:
             - name: NODE_ENV
               value: "production"
+            - name: COUCHDB_URL
+              value: "http://couchdb:5984"
+            - name: USER_NAME
+              value: "admin"
+            - name: PASSWORD
+              value: "securepassword123"
+            - name: SERVER_URL
+              value: "http://localhost:5000"
+            - name: API_KEY
+              value: ""
           resources:
             requests:
               cpu: "100m"

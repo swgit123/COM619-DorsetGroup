@@ -1,0 +1,10 @@
+{
+  "_id": "default_example",
+  "name": "Example Recipe",
+  "description": "Example Description",
+  "ingredients": [{
+    "name": "Ingredient 1",
+    "unit": "ml",
+    "amount": 200
+  }]
+}
