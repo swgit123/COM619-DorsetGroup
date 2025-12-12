@@ -175,6 +175,9 @@ def update_recipe(recipe_id):
 def delete_recipe(recipe_id):
     """Delete a specific recipe by ID"""
     try:
+        # Get username from query params for authorization
+        username = request.args.get('username')
+        
         # Get the current document to retrieve the _rev (required for deletion)
         get_url = f"{COUCHDB_URL}/{RECIPES_PATH}/{recipe_id}"
         get_response = requests.get(get_url, auth=(USERNAME, PASSWORD))
@@ -184,6 +187,11 @@ def delete_recipe(recipe_id):
         
         get_response.raise_for_status()
         current_doc = get_response.json()
+        
+        # Check if the user is the owner of the recipe
+        recipe_author_id = current_doc.get('authorId') or current_doc.get('author')
+        if username and recipe_author_id and recipe_author_id != username:
+            return jsonify({'error': 'Unauthorized: You can only delete your own recipes'}), 403
         
         # Delete the document using the _rev
         delete_url = f"{COUCHDB_URL}/{RECIPES_PATH}/{recipe_id}?rev={current_doc['_rev']}"

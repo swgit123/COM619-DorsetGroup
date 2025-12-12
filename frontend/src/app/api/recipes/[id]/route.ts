@@ -62,8 +62,15 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+    const { searchParams } = new URL(req.url);
+    const username = searchParams.get("username");
 
-    const response = await fetch(`${BACKEND_URL}/recipes/${id}`, {
+    const url = new URL(`${BACKEND_URL}/recipes/${id}`);
+    if (username) {
+      url.searchParams.set("username", username);
+    }
+
+    const response = await fetch(url.toString(), {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",

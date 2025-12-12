@@ -302,17 +302,32 @@ function RecipeModal({
   onClose,
   onLike,
   onFav,
+  onDelete,
+  currentUser,
 }: {
   recipe: Recipe | null;
   onClose: () => void;
   onLike: (id: string) => void;
   onFav: (id: string) => void;
+  onDelete?: (id: string) => void;
+  currentUser?: string;
 }) {
   if (!recipe) return null;
 
   const recipeId = recipe._id || recipe.id || "";
   const recipeImage = recipe.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=800&auto=format&fit=crop";
   const recipeAuthor = recipe.author || "Anonymous";
+  const recipeAuthorId = recipe.authorId || recipe.author;
+  const isOwner = currentUser && (recipeAuthorId === currentUser);
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
+
+  const handleDelete = () => {
+    if (onDelete && recipeId) {
+      onDelete(recipeId);
+      onClose();
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -363,7 +378,39 @@ function RecipeModal({
             />
             {recipe.favourite ? "Saved" : "Save"}
           </button>
+          {isOwner && (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="px-4 py-2 rounded-xl font-medium bg-red-50 hover:bg-red-100 text-red-600 flex items-center gap-2 ml-auto"
+            >
+              <X className="h-5 w-5" />
+              Delete Recipe
+            </button>
+          )}
         </div>
+
+        {/* Delete Confirmation Dialog */}
+        {showDeleteConfirm && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+            <p className="text-sm text-red-800 mb-3">
+              Are you sure you want to delete this recipe? This action cannot be undone.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 rounded-xl font-medium bg-red-600 hover:bg-red-700 text-white"
+              >
+                Yes, Delete
+              </button>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className={`${brand.btn} ${brand.subtle}`}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Description */}
         {recipe.description && (
@@ -1141,17 +1188,21 @@ function HomePage({
   items,
   onLike,
   onFav,
+  onDelete,
   loading,
   userFavourites,
   userLikes,
+  currentUser,
 }: {
   loggedIn: boolean;
   items: Recipe[];
   onLike: (id: string) => void;
   onFav: (id: string) => void;
+  onDelete?: (id: string) => void;
   loading: boolean;
   userFavourites: string[];
   userLikes: string[];
+  currentUser?: string;
 }) {
   const [q, setQ] = useState("");
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
@@ -1219,6 +1270,8 @@ function HomePage({
           onClose={() => setSelectedRecipe(null)}
           onLike={onLike}
           onFav={onFav}
+          onDelete={onDelete}
+          currentUser={currentUser}
         />
       )}
     </div>
@@ -1230,15 +1283,19 @@ function FavouritesPage({
   items,
   onLike,
   onFav,
+  onDelete,
   userFavourites,
   userLikes,
+  currentUser,
 }: {
   loggedIn: boolean;
   items: Recipe[];
   onLike: (id: string) => void;
   onFav: (id: string) => void;
+  onDelete?: (id: string) => void;
   userFavourites: string[];
   userLikes: string[];
+  currentUser?: string;
 }) {
   const [q, setQ] = useState("");
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
@@ -1309,6 +1366,8 @@ function FavouritesPage({
           onClose={() => setSelectedRecipe(null)}
           onLike={onLike}
           onFav={onFav}
+          onDelete={onDelete}
+          currentUser={currentUser}
         />
       )}
     </div>
@@ -1319,10 +1378,12 @@ function SettingsPage({
   currentUser,
   userProfileImage,
   onUpdateProfile,
+  onLogout,
 }: {
   currentUser: string;
   userProfileImage?: string;
   onUpdateProfile: () => void;
+  onLogout: () => void;
 }) {
   const [profileImage, setProfileImage] = useState<string | null>(userProfileImage || null);
   const [newUsername, setNewUsername] = useState("");
@@ -1392,9 +1453,14 @@ function SettingsPage({
         return;
       }
 
-      setSuccess("Username updated successfully! Please log in again.");
+      setSuccess("Username updated successfully! Logging you out...");
       setNewUsername("");
       setLoading(false);
+      
+      // Log out after 2 seconds
+      setTimeout(() => {
+        onLogout();
+      }, 2000);
     } catch (err) {
       setError("Network error. Please try again.");
       setLoading(false);
@@ -1590,6 +1656,37 @@ export default function App() {
   const [userFavourites, setUserFavourites] = useState<string[]>([]);
   const [userLikes, setUserLikes] = useState<string[]>([]);
 
+  // Helper functions for safe localStorage access
+  const saveUserToStorage = (username: string) => {
+    try {
+      localStorage.setItem("currentUser", username);
+    } catch (err) {
+      console.warn("Could not save to localStorage:", err);
+    }
+  };
+
+  const removeUserFromStorage = () => {
+    try {
+      localStorage.removeItem("currentUser");
+    } catch (err) {
+      console.warn("Could not remove from localStorage:", err);
+    }
+  };
+
+  // Restore auth state from localStorage on mount
+  React.useEffect(() => {
+    try {
+      const savedUser = localStorage.getItem("currentUser");
+      if (savedUser) {
+        setLoggedIn(true);
+        setCurrentUser(savedUser);
+      }
+    } catch (err) {
+      // localStorage might not be available (SSR, private browsing, etc.)
+      console.warn("Could not access localStorage:", err);
+    }
+  }, []);
+
   // Fetch recipes on mount
   React.useEffect(() => {
     fetchRecipes();
@@ -1747,6 +1844,34 @@ export default function App() {
     }
   };
 
+  const deleteRecipe = async (id: string) => {
+    if (!loggedIn || !currentUser) {
+      alert("Please sign in to delete recipes");
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/recipes/${id}?username=${currentUser}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Remove from local state
+        setItems((prev) => prev.filter((recipe) => (recipe._id || recipe.id) !== id));
+        // Also remove from favourites and likes if present
+        setUserFavourites((prev) => prev.filter((fId) => fId !== id));
+        setUserLikes((prev) => prev.filter((lId) => lId !== id));
+        alert("Recipe deleted successfully");
+      } else {
+        const data = await response.json();
+        alert(data.error || "Failed to delete recipe");
+      }
+    } catch (err) {
+      console.error("Failed to delete recipe:", err);
+      alert("Failed to delete recipe. Please try again.");
+    }
+  };
+
   return (
     <div className={`${brand.bg} text-slate-900 min-h-screen`}>
       <Navbar
@@ -1757,6 +1882,7 @@ export default function App() {
           setCurrentUser("");
           setUserProfileImage("");
           setRoute("home");
+          removeUserFromStorage();
         }}
         onLogin={() => {
           setRoute("auth");
@@ -1773,6 +1899,7 @@ export default function App() {
           onSuccess={(username) => {
             setLoggedIn(true);
             setCurrentUser(username);
+            saveUserToStorage(username);
             setRoute("home");
           }}
         />
@@ -1792,6 +1919,7 @@ export default function App() {
             onSuccess={(username) => {
               setLoggedIn(true);
               setCurrentUser(username);
+              saveUserToStorage(username);
               setRoute("upload");
             }}
           />
@@ -1804,6 +1932,8 @@ export default function App() {
           userFavourites={userFavourites}
           userLikes={userLikes}
           onFav={toggleFav}
+          onDelete={deleteRecipe}
+          currentUser={currentUser}
         />
       ) : route === "settings" ? (
         loggedIn ? (
@@ -1811,6 +1941,14 @@ export default function App() {
             currentUser={currentUser}
             userProfileImage={userProfileImage}
             onUpdateProfile={fetchUserProfile}
+            onLogout={() => {
+              setLoggedIn(false);
+              setCurrentUser("");
+              setUserProfileImage("");
+              setRoute("auth");
+              setAuthMode("login");
+              removeUserFromStorage();
+            }}
           />
         ) : (
           <AuthPage
@@ -1819,6 +1957,7 @@ export default function App() {
             onSuccess={(username) => {
               setLoggedIn(true);
               setCurrentUser(username);
+              saveUserToStorage(username);
               setRoute("settings");
             }}
           />
@@ -1829,9 +1968,11 @@ export default function App() {
           items={items}
           onLike={toggleLike}
           onFav={toggleFav}
+          onDelete={deleteRecipe}
           loading={loading}
           userFavourites={userFavourites}
           userLikes={userLikes}
+          currentUser={currentUser}
         />
       )}
 
