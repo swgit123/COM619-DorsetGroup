@@ -21,3 +21,6 @@ undeployApp:
 
 undeploydb:
 	${MAKE} -C BaseInfrastructure undeployCouchDB
+
+debug:
+	@kubectl run debug-curl --rm -it --image=curlimages/curl --restart=Never -- sh
