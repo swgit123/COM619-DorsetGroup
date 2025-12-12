@@ -1,0 +1,27 @@
+name: Yaml Lint
+
+on: [push]
+
+jobs:
+  lintAllTheThings:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: yaml-lint
+        id: yamllint
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          config_file: .yamllint
+          strict: false
+
+      - name: logfile path
+        run: echo "${{ steps.yamllint.outputs.logfile }}"
+
+      - name: Upload yamllint logfile
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yamllint-logfile
+          path: ${{ steps.yamllint.outputs.logfile }}
