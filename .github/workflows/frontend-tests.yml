@@ -1,10 +1,12 @@
 name: Frontend Tests
 
 on:
-  pull_request:
   push:
     branches:
       - main
+      - develop
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   test:
@@ -30,4 +32,4 @@ jobs:
         run: npm ci
 
       - name: Run tests
-        run: npm run test
+        run: npm test
