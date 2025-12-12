@@ -26,9 +26,9 @@ spec:
             - name: COUCHDB_URL
               value: "http://couchdb:5984"
             - name: USER_NAME
-              value: ""
+              value: "admin"
             - name: PASSWORD
-              value: ""
+              value: "securepassword123"
             - name: SERVER_URL
               value: "http://localhost:5000"
             - name: API_KEY
