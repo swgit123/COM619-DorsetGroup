@@ -147,39 +147,37 @@ From there CouchDB API will also be accessable at localhost:5984. This allows fo
 
 ## Front End
 
-Front End
-
 The frontend is a single-page application built with React and Next.js, using TypeScript and Tailwind utility classes for styling. It runs as a containerised service within the EKS cluster and is exposed via the Application Load Balancer.
 
 The application uses a client-side routed App component ("use client") to switch between core views (Home, Upload, Favourites, Authentication, and Settings) without full page reloads.
 
-Key Features
+**Key Features**
 
-Role-based UI behaviour
+**Role-based UI behaviour**
 - Guests can browse and search public recipes.
 - Authenticated users can like recipes, save favourites, upload new recipes, and manage their account.
 - Authentication state is held in React state and controls routing and navigation visibility.
 
-Recipe browsing
+**Recipe browsing**
 - Recipes are displayed as cards with image, title, author, and actions.
 - A modal view shows full recipe details including ingredients and step-by-step instructions.
 - Search filtering is handled client-side using useState and useMemo.
 
-Ingredient picker
+**Ingredient picker**
 - Interactive ingredient search with suggestion pills.
 - Quantity and unit selection per ingredient.
 - Ingredient suggestions are fetched via a Next.js API route (/api/ingredients), keeping third-party API keys server-side.
 
-Account management
+**Account management**
 - Users can update their profile picture, username, and password via the Settings view.
 - Changes are applied through authenticated backend API requests.
 
-Styling and UX
+**Styling and UX**
 - A small internal design token object centralises common styles (buttons, cards, inputs).
 - Responsive layout using flexbox and grid utilities.
 - Micro-interactions such as filled icons for likes/favourites and animated ingredient pills provide immediate visual feedback.
 
-Security and Dependencies
+**Security and Dependencies**
 Frontend dependencies are pinned to known-safe versions. During development, a React/Next.js security advisory was identified and mitigated by upgrading to patched releases and redeploying the frontend container, ensuring no vulnerable versions were exposed in production.
 
 
