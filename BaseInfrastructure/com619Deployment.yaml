@@ -32,7 +32,7 @@ spec:
             - name: SERVER_URL
               value: "http://localhost:5000"
             - name: API_KEY
-              value: "JefFFdNmsHJj4uja6c2MxXRZhSt5EXFCaCmJAzeV"
+              value: ""
           resources:
             requests:
               cpu: "100m"
