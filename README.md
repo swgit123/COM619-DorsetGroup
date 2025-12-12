@@ -193,7 +193,30 @@ The backend runs on port 5000 and can be accessed internally on the deployment p
 
 ## GitHub Actions
 
-Description for GitHub Actions goes here.
+Github actions are comprised of a group of yaml files that run on specific git actions such as push, pull and merge requests and will check the safety, quality and consistency of files within the codebase and can also automatically run tests. The files are stored in the .github/workflows folder and run reports are shown in the actions tab on github.
+
+- First you set the on triggers that specify when the test is activated. In our case this is usually a push or pull_request:
+
+```yaml
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+```
+
+- The jobs tag specifices what each job contained within the test is for.
+
+- The runs-on tag is for setting what type of virtual machine will run the job:
+
+```yaml
+runs-on: ubuntu-latest
+```
+
+- Defaults tag can set global properties for the job like the running directory
+
+- Each specific github workflow then will diverge, some using predefined actions such as checking out the code.
 
 ## Pre Commits
 
