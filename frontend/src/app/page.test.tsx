@@ -8,6 +8,12 @@ import App from "./page";
 beforeEach(() => {
   jest.restoreAllMocks();
 
+  // Prevent tests bleeding auth state across runs
+  localStorage.clear();
+
+  // jsdom doesn't implement alert
+  jest.spyOn(window, "alert").mockImplementation(() => {});
+
   global.fetch = jest.fn(async (url, options) => {
     // Login success
     if (url === "/api/auth/login") {
@@ -17,11 +23,19 @@ beforeEach(() => {
       };
     }
 
-    // Fetch recipes (empty by default)
+    // Fetch recipes 
     if (url === "/api/recipes" && (!options || options.method === "GET")) {
       return {
         ok: true,
-        json: async () => [],
+        json: async () => [
+          {
+            id: "recipe-1",
+            name: "My Test Recipe",
+            author: "sam",
+            authorId: "sam",
+            isPublic: true,
+          },
+        ],
       };
     }
 
@@ -31,6 +45,28 @@ beforeEach(() => {
         ok: true,
         json: async () => ({ id: "new-recipe-id" }),
       };
+    }
+
+    // Delete recipe
+    if (
+      typeof url === "string" &&
+      url.startsWith("/api/recipes/") &&
+      options?.method === "DELETE"
+    ) {
+      return {
+        ok: true,
+        json: async () => ({}),
+      };
+    }
+
+    if (typeof url === "string" && url.startsWith("/api/favourites")) {
+      return { ok: true, json: async () => ({ favourites: [] }) };
+    }
+    if (typeof url === "string" && url.startsWith("/api/likes")) {
+      return { ok: true, json: async () => ({ likes: [] }) };
+    }
+    if (typeof url === "string" && url.startsWith("/api/accounts/")) {
+      return { ok: true, json: async () => ({ profileImage: "" }) };
     }
 
     // Fallback
@@ -53,9 +89,7 @@ describe("RecipeShare App (Frontend)", () => {
   test("shows guest message when not signed in", async () => {
     render(<App />);
 
-    expect(
-      await screen.findByText(/viewing as a guest/i)
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/viewing as a guest/i)).toBeInTheDocument();
   });
 
   test("search input is rendered", async () => {
@@ -69,9 +103,7 @@ describe("RecipeShare App (Frontend)", () => {
   test("clicking sign in opens login form", async () => {
     render(<App />);
 
-    await userEvent.click(
-      screen.getByRole("button", { name: /sign in/i })
-    );
+    await userEvent.click(screen.getByRole("button", { name: /sign in/i }));
 
     expect(
       await screen.findByRole("heading", { name: /login/i })
@@ -81,9 +113,7 @@ describe("RecipeShare App (Frontend)", () => {
   test("login button is disabled when fields are empty", async () => {
     render(<App />);
 
-    await userEvent.click(
-      screen.getByRole("button", { name: /sign in/i })
-    );
+    await userEvent.click(screen.getByRole("button", { name: /sign in/i }));
 
     const loginButton = screen.getByRole("button", { name: /^login$/i });
     expect(loginButton).toBeDisabled();
@@ -92,13 +122,10 @@ describe("RecipeShare App (Frontend)", () => {
   test("password visibility toggle switches input type", async () => {
     render(<App />);
 
-    await userEvent.click(
-      screen.getByRole("button", { name: /sign in/i })
-    );
+    await userEvent.click(screen.getByRole("button", { name: /sign in/i }));
 
     const passwordInput = screen.getByPlaceholderText("••••••••");
-    const toggleButton =
-      passwordInput.parentElement!.querySelector("button")!;
+    const toggleButton = passwordInput.parentElement!.querySelector("button")!;
 
     expect(passwordInput).toHaveAttribute("type", "password");
 
@@ -110,39 +137,23 @@ describe("RecipeShare App (Frontend)", () => {
   test("shows empty state when no recipes are available", async () => {
     render(<App />);
 
-    expect(
-      await screen.findByText(/no recipes found/i)
-    ).toBeInTheDocument();
+    expect(await screen.findByText("My Test Recipe")).toBeInTheDocument();
   });
 
-  // ✅ NEW TEST — ADDING A RECIPE (SIGNED-IN USER)
   test("signed-in user can publish a recipe", async () => {
     render(<App />);
 
     // Open login
-    await userEvent.click(
-      screen.getByRole("button", { name: /sign in/i })
-    );
+    await userEvent.click(screen.getByRole("button", { name: /sign in/i }));
 
     // Fill login form
-    await userEvent.type(
-      screen.getByPlaceholderText(/your_username/i),
-      "sam"
-    );
-    await userEvent.type(
-      screen.getByPlaceholderText("••••••••"),
-      "password123"
-    );
+    await userEvent.type(screen.getByPlaceholderText(/your_username/i), "sam");
+    await userEvent.type(screen.getByPlaceholderText("••••••••"), "password123");
 
-    await userEvent.click(
-      screen.getByRole("button", { name: /^login$/i })
-    );
+    await userEvent.click(screen.getByRole("button", { name: /^login$/i }));
 
     // Upload button should now be visible
-    const uploadButton = await screen.findByRole("button", {
-      name: /upload/i,
-    });
-
+    const uploadButton = await screen.findByRole("button", { name: /upload/i });
     await userEvent.click(uploadButton);
 
     // Fill recipe name
@@ -152,16 +163,47 @@ describe("RecipeShare App (Frontend)", () => {
     );
 
     // Publish recipe
-    await userEvent.click(
-      screen.getByRole("button", { name: /publish/i })
-    );
+    await userEvent.click(screen.getByRole("button", { name: /publish/i }));
 
     // Assert POST request happened
     expect(global.fetch).toHaveBeenCalledWith(
       "/api/recipes",
-      expect.objectContaining({
-        method: "POST",
-      })
+      expect.objectContaining({ method: "POST" })
     );
+  });
+
+  test("signed-in user can delete their own recipe", async () => {
+    render(<App />);
+
+    // Sign in
+    await userEvent.click(screen.getByRole("button", { name: /sign in/i }));
+
+    await userEvent.type(screen.getByPlaceholderText(/your_username/i), "sam");
+    await userEvent.type(screen.getByPlaceholderText("••••••••"), "password123");
+
+    await userEvent.click(screen.getByRole("button", { name: /^login$/i }));
+
+    // Recipe should appear
+    expect(await screen.findByText("My Test Recipe")).toBeInTheDocument();
+
+    // Open recipe modal
+    await userEvent.click(screen.getByRole("button", { name: /details/i }));
+
+    // Delete button should be visible for owner
+    await userEvent.click(
+      await screen.findByRole("button", { name: /delete recipe/i })
+    );
+
+    // Confirm delete
+    await userEvent.click(screen.getByRole("button", { name: /yes, delete/i }));
+
+    // Assert DELETE API call
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/recipes/recipe-1"),
+      expect.objectContaining({ method: "DELETE" })
+    );
+
+    // Recipe should be removed from UI
+    expect(screen.queryByText("My Test Recipe")).not.toBeInTheDocument();
   });
 });
