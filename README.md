@@ -154,7 +154,7 @@ The backend runs on port 5000 and can be accessed internally on the deployment p
 
 ## GitHub Actions
 
-Description for GitHub Actions goes here.
+Github actions are comprised of a group of yaml files that run on specific git actions such as push, pull and merge requests and will check the safety, quality and consistency of files within the codebase and can also automatically run tests. The files are stored in the .github/workflows folder and run reports are shown in the actions tab on github
 
 ## Pre Commits
 
